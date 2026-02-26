@@ -22,12 +22,8 @@ func UserConfigRoot() string {
 	}
 
 	// Fallback to home directory if UserConfigDir fails
-	home, err := os.UserHomeDir()
-	if err == nil {
-		return home
-	}
-
-	return "."
+	home, _ := os.UserHomeDir()
+	return home
 }
 
 // AppDataRoot returns the shared railyard folder path used by backend storage.
