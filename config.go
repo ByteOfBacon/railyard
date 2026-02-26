@@ -12,7 +12,7 @@ import (
 type AppConfig struct {
 	ModFolderPath  string `json:"modFolderPath,omitempty"`
 	ExecutablePath string `json:"executablePath,omitempty"`
-	
+
 	// Other fields to be appended here	
 	// AppVersion string `json:"appVersion,omitempty"`
 }
@@ -58,6 +58,7 @@ func (v ConfigPathValidation) IsValid() bool {
 }
 
 type Config struct {
+	// Mutex should be applied to all read-modify-write operations
 	mu sync.Mutex
 }
 
@@ -84,7 +85,6 @@ func writeAppConfig(cfg AppConfig) error {
 func (s *Config) ResolveConfig() (ResolveConfigResult, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-
 	cfg, err := readAppConfig()
 	if err != nil {
 		return ResolveConfigResult{}, err
