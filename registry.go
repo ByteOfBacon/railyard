@@ -515,3 +515,9 @@ func (r *Registry) GetInstalledMods() []string {
 func (r *Registry) GetInstalledMaps() []string {
 	return []string{}
 }
+
+// GetInstalledMapCodes returns the city codes of locally installed maps.
+// Currently stubbed to return an empty slice.
+func (r *Registry) GetInstalledMapCodes() []string {
+	return []string{}
+}
