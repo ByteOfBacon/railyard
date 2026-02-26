@@ -1,7 +1,7 @@
 export namespace main {
 	
 	export class AppConfig {
-	    modFolderPath?: string;
+	    metroMakerDataPath?: string;
 	    executablePath?: string;
 	
 	    static createFrom(source: any = {}) {
@@ -10,13 +10,60 @@ export namespace main {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.modFolderPath = source["modFolderPath"];
+	        this.metroMakerDataPath = source["metroMakerDataPath"];
 	        this.executablePath = source["executablePath"];
 	    }
 	}
+	export class ConfigData {
+	    name: string;
+	    code: string;
+	    description: string;
+	    population: number;
+	    country?: string;
+	    thumbnail_bbox?: number[];
+	    creator: string;
+	    version: string;
+	    // Go type: struct { Latitude float64 "json:\"latitude\""; Longitude float64 "json:\"longitude\""; Zoom float64 "json:\"zoom\""; Pitch *float64 "json:\"pitch\""; Bearing float64 "json:\"bearing\"" }
+	    initial_view_state: any;
+	
+	    static createFrom(source: any = {}) {
+	        return new ConfigData(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.code = source["code"];
+	        this.description = source["description"];
+	        this.population = source["population"];
+	        this.country = source["country"];
+	        this.thumbnail_bbox = source["thumbnail_bbox"];
+	        this.creator = source["creator"];
+	        this.version = source["version"];
+	        this.initial_view_state = this.convertValues(source["initial_view_state"], Object);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class ConfigPathValidation {
 	    isConfigured: boolean;
-	    modFolderPathValid: boolean;
+	    metroMakerDataPathValid: boolean;
 	    executablePathValid: boolean;
 	
 	    static createFrom(source: any = {}) {
@@ -26,9 +73,43 @@ export namespace main {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.isConfigured = source["isConfigured"];
-	        this.modFolderPathValid = source["modFolderPathValid"];
+	        this.metroMakerDataPathValid = source["metroMakerDataPathValid"];
 	        this.executablePathValid = source["executablePathValid"];
 	    }
+	}
+	export class HandleInstallResponse {
+	    status: string;
+	    message?: string;
+	    data?: ConfigData;
+	
+	    static createFrom(source: any = {}) {
+	        return new HandleInstallResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.status = source["status"];
+	        this.message = source["message"];
+	        this.data = this.convertValues(source["data"], ConfigData);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 	export class UpdateConfig {
 	    type: string;

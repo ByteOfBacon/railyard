@@ -27,8 +27,8 @@ func writeTestConfigFile(t *testing.T, content string) {
 
 func testConfig() AppConfig {
 	return AppConfig{
-		ExecutablePath: "dir/executable.exe",
-		ModFolderPath:  "dir/mods",
+		ExecutablePath:     "dir/executable.exe",
+		MetroMakerDataPath: "dir/",
 	}
 }
 
@@ -36,7 +36,7 @@ func TestAreConfigPathsConfigured(t *testing.T) {
 	cfg := testConfig()
 	require.True(t, cfg.areConfigPathsConfigured())
 
-	cfg.ModFolderPath = "   "
+	cfg.MetroMakerDataPath = "   "
 	require.False(t, cfg.areConfigPathsConfigured())
 }
 
@@ -51,13 +51,13 @@ func TestValidateConfigPaths(t *testing.T) {
 
 	// Paths are configured but do not exist on disk
 	cfg = AppConfig{
-		ModFolderPath:  "blah/blah/mods",
-		ExecutablePath: "blah.exe",
+		MetroMakerDataPath: "blah/blah/",
+		ExecutablePath:     "blah.exe",
 	}
 	valid, result = cfg.ValidateConfigPaths()
 	require.False(t, valid)
 	require.True(t, result.IsConfigured)
-	require.False(t, result.ModFolderPathValid)
+	require.False(t, result.MetroMakerDataPathValid)
 	require.False(t, result.ExecutablePathValid)
 
 	modDir := t.TempDir()
@@ -66,13 +66,13 @@ func TestValidateConfigPaths(t *testing.T) {
 
 	// Paths are configured and exist on disk
 	cfg = AppConfig{
-		ModFolderPath:  modDir,
-		ExecutablePath: exeFile,
+		MetroMakerDataPath: modDir,
+		ExecutablePath:     exeFile,
 	}
 	valid, result = cfg.ValidateConfigPaths()
 	require.True(t, valid)
 	require.True(t, result.IsConfigured)
-	require.True(t, result.ModFolderPathValid)
+	require.True(t, result.MetroMakerDataPathValid)
 	require.True(t, result.ExecutablePathValid)
 }
 
@@ -84,7 +84,7 @@ func TestUpdateConfigPersistsMutations(t *testing.T) {
 
 	cfg := NewConfig()
 	updated, err := cfg.updateConfig(func(c *AppConfig) {
-		c.ModFolderPath = "dir/mods"
+		c.MetroMakerDataPath = "dir/"
 	})
 	require.NoError(t, err)
 	require.Equal(t, testConfig(), updated)
@@ -100,8 +100,8 @@ func TestSetConfigOverwritesAllFields(t *testing.T) {
 
 	cfg := NewConfig()
 	next := AppConfig{
-		ExecutablePath: "new/executable.exe",
-		ModFolderPath:  "new/mods",
+		ExecutablePath:     "new/executable.exe",
+		MetroMakerDataPath: "new/",
 	}
 	updated, err := cfg.SetConfig(next)
 	require.NoError(t, err)

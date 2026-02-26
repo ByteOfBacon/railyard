@@ -10,18 +10,16 @@ import (
 
 // AppConfig is persisted at ConfigPath() and is used for global configuration
 type AppConfig struct {
-	ModFolderPath  string `json:"modFolderPath,omitempty"`
-	ExecutablePath string `json:"executablePath,omitempty"`
-
-	// Other fields to be appended here	
-	// AppVersion string `json:"appVersion,omitempty"`
+	MetroMakerDataPath string `json:"metroMakerDataPath,omitempty"`
+	ExecutablePath     string `json:"executablePath,omitempty"`
+	// Other fields to be appended here
 }
 
 // ConfigPathValidation is the result of validating AppConfig paths
 type ConfigPathValidation struct {
-	IsConfigured        bool `json:"isConfigured"`
-	ModFolderPathValid  bool `json:"modFolderPathValid"`
-	ExecutablePathValid bool `json:"executablePathValid"`
+	IsConfigured            bool `json:"isConfigured"`
+	MetroMakerDataPathValid bool `json:"metroMakerDataPathValid"`
+	ExecutablePathValid     bool `json:"executablePathValid"`
 }
 
 // ResolveConfigResult describes the result of resolving app config from disk.
@@ -32,7 +30,7 @@ type ResolveConfigResult struct {
 
 // AreConfigPathsConfigured checks if both required paths have been set in AppConfig
 func (c AppConfig) areConfigPathsConfigured() bool {
-	return strings.TrimSpace(c.ModFolderPath) != "" && strings.TrimSpace(c.ExecutablePath) != ""
+	return strings.TrimSpace(c.MetroMakerDataPath) != "" && strings.TrimSpace(c.ExecutablePath) != ""
 }
 
 // ValidateConfigPaths checks whether the AppConfig has been configured and whether or not its specified paths exist on disk
@@ -45,8 +43,8 @@ func (c AppConfig) ValidateConfigPaths() (bool, ConfigPathValidation) {
 		return false, result
 	}
 
-	modInfo, modErr := os.Stat(c.ModFolderPath)
-	result.ModFolderPathValid = modErr == nil && modInfo.IsDir()
+	modInfo, modErr := os.Stat(c.MetroMakerDataPath)
+	result.MetroMakerDataPathValid = modErr == nil && modInfo.IsDir()
 	exeInfo, exeErr := os.Stat(c.ExecutablePath)
 	result.ExecutablePathValid = exeErr == nil && !exeInfo.IsDir()
 
@@ -54,7 +52,7 @@ func (c AppConfig) ValidateConfigPaths() (bool, ConfigPathValidation) {
 }
 
 func (v ConfigPathValidation) IsValid() bool {
-	return v.IsConfigured && v.ModFolderPathValid && v.ExecutablePathValid
+	return v.IsConfigured && v.MetroMakerDataPathValid && v.ExecutablePathValid
 }
 
 type Config struct {
@@ -120,10 +118,10 @@ func (s *Config) UpdateExecutable(executablePath string) (AppConfig, error) {
 	})
 }
 
-// UpdateModFolder updates and persists ModFolderPath to the app config.
-func (s *Config) UpdateModFolder(modFolderPath string) (AppConfig, error) {
+// UpdateMetroMakerDataFolder updates and persists metroMakerDataPath to the app config.
+func (s *Config) UpdateMetroMakerDataFolder(metroMakerDataPath string) (AppConfig, error) {
 	return s.updateConfig(func(cfg *AppConfig) {
-		cfg.ModFolderPath = strings.TrimSpace(modFolderPath)
+		cfg.MetroMakerDataPath = strings.TrimSpace(metroMakerDataPath)
 	})
 }
 
@@ -131,8 +129,8 @@ func (s *Config) UpdateModFolder(modFolderPath string) (AppConfig, error) {
 func (s *Config) SetConfig(next AppConfig) (AppConfig, error) {
 	return s.updateConfig(func(cfg *AppConfig) {
 		*cfg = AppConfig{
-			ModFolderPath:  strings.TrimSpace(next.ModFolderPath),
-			ExecutablePath: strings.TrimSpace(next.ExecutablePath),
+			MetroMakerDataPath: strings.TrimSpace(next.MetroMakerDataPath),
+			ExecutablePath:     strings.TrimSpace(next.ExecutablePath),
 		}
 	})
 }

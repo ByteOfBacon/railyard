@@ -10,4 +10,4 @@ export function SetConfig(arg1:main.AppConfig):Promise<main.AppConfig>;
 
 export function UpdateExecutable(arg1:string):Promise<main.AppConfig>;
 
-export function UpdateModFolder(arg1:string):Promise<main.AppConfig>;
+export function UpdateMetroMakerDataFolder(arg1:string):Promise<main.AppConfig>;
