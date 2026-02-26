@@ -1,5 +1,19 @@
 export namespace main {
 	
+	export class AppConfig {
+	    modFolderPath?: string;
+	    executablePath?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new AppConfig(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.modFolderPath = source["modFolderPath"];
+	        this.executablePath = source["executablePath"];
+	    }
+	}
 	export class ConfigData {
 	    name: string;
 	    code: string;
@@ -46,6 +60,22 @@ export namespace main {
 		    }
 		    return a;
 		}
+	}
+	export class ConfigPathValidation {
+	    isConfigured: boolean;
+	    modFolderPathValid: boolean;
+	    executablePathValid: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new ConfigPathValidation(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.isConfigured = source["isConfigured"];
+	        this.modFolderPathValid = source["modFolderPathValid"];
+	        this.executablePathValid = source["executablePathValid"];
+	    }
 	}
 	export class InstallMapResponse {
 	    status: string;
@@ -193,6 +223,38 @@ export namespace main {
 	        this.gallery = source["gallery"];
 	        this.source = source["source"];
 	        this.update = this.convertValues(source["update"], UpdateConfig);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ResolveConfigResult {
+	    config: AppConfig;
+	    validation: ConfigPathValidation;
+	
+	    static createFrom(source: any = {}) {
+	        return new ResolveConfigResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.config = this.convertValues(source["config"], AppConfig);
+	        this.validation = this.convertValues(source["validation"], ConfigPathValidation);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

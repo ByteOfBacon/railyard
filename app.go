@@ -21,6 +21,7 @@ import (
 type App struct {
 	ctx      context.Context
 	Registry *Registry
+	Config   *Config
 }
 
 type MissingFilesError struct {
@@ -96,6 +97,7 @@ type CitiesData struct {
 func NewApp() *App {
 	return &App{
 		Registry: NewRegistry(),
+		Config:   NewConfig(),
 	}
 }
 

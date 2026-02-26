@@ -15,6 +15,8 @@ import (
 	"strings"
 	"time"
 
+	"railyard/internal/files"
+
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -119,14 +121,8 @@ type Registry struct {
 // NewRegistry creates a new Registry instance with the platform-appropriate
 // storage path.
 func NewRegistry() *Registry {
-	configDir, err := os.UserConfigDir()
-	if err != nil {
-		// Fallback to home directory if UserConfigDir fails
-		home, _ := os.UserHomeDir()
-		configDir = home
-	}
 	return &Registry{
-		repoPath: filepath.Join(configDir, "railyard", "registry"),
+		repoPath: RegistryRepoPath(),
 		httpClient: &http.Client{
 			Timeout: 15 * time.Second,
 		},
@@ -281,27 +277,17 @@ func (r *Registry) fetchAndReset(repo *git.Repository) error {
 // GetMods reads the mods index and returns all mod manifests.
 func (r *Registry) GetMods() ([]ModManifest, error) {
 	indexPath := filepath.Join(r.repoPath, "mods", "index.json")
-	indexData, err := os.ReadFile(indexPath)
+	index, err := files.ReadJSON[IndexFile](indexPath, "mods index", files.JSONReadOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to read mods index: %w", err)
-	}
-
-	var index IndexFile
-	if err := json.Unmarshal(indexData, &index); err != nil {
-		return nil, fmt.Errorf("failed to parse mods index: %w", err)
+		return nil, err
 	}
 
 	mods := make([]ModManifest, 0, len(index.Mods))
 	for _, modID := range index.Mods {
 		manifestPath := filepath.Join(r.repoPath, "mods", modID, "manifest.json")
-		data, err := os.ReadFile(manifestPath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read manifest for mod %q: %w", modID, err)
-		}
-
-		var manifest ModManifest
-		if err := json.Unmarshal(data, &manifest); err != nil {
-			return nil, fmt.Errorf("failed to parse manifest for mod %q: %w", modID, err)
+		manifest, modErr := files.ReadJSON[ModManifest](manifestPath, fmt.Sprintf("manifest for mod %q", modID), files.JSONReadOptions{})
+		if modErr != nil {
+			return nil, modErr
 		}
 		mods = append(mods, manifest)
 	}
@@ -312,27 +298,17 @@ func (r *Registry) GetMods() ([]ModManifest, error) {
 // GetMaps reads the maps index and returns all map manifests.
 func (r *Registry) GetMaps() ([]MapManifest, error) {
 	indexPath := filepath.Join(r.repoPath, "maps", "index.json")
-	indexData, err := os.ReadFile(indexPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read maps index: %w", err)
-	}
-
-	var index IndexFile
-	if err := json.Unmarshal(indexData, &index); err != nil {
-		return nil, fmt.Errorf("failed to parse maps index: %w", err)
+	index, indexErr := files.ReadJSON[IndexFile](indexPath, "maps index", files.JSONReadOptions{})
+	if indexErr != nil {
+		return nil, indexErr
 	}
 
 	maps := make([]MapManifest, 0, len(index.Maps))
 	for _, mapID := range index.Maps {
 		manifestPath := filepath.Join(r.repoPath, "maps", mapID, "manifest.json")
-		data, err := os.ReadFile(manifestPath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read manifest for map %q: %w", mapID, err)
-		}
-
-		var manifest MapManifest
-		if err := json.Unmarshal(data, &manifest); err != nil {
-			return nil, fmt.Errorf("failed to parse manifest for map %q: %w", mapID, err)
+		manifest, mapErr := files.ReadJSON[MapManifest](manifestPath, fmt.Sprintf("manifest for map %q", mapID), files.JSONReadOptions{})
+		if mapErr != nil {
+			return nil, mapErr
 		}
 		maps = append(maps, manifest)
 	}
