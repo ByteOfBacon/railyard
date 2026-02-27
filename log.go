@@ -9,14 +9,6 @@ import (
 	"time"
 )
 
-type Routine string
-
-const (
-	StartupRoutine  Routine = "Startup"
-	RuntimeRoutine  Routine = "Runtime"
-	ShutdownRoutine Routine = "Shutdown"
-)
-
 type Logger interface {
 	Info(msg string, attrs ...any)
 	Warn(msg string, attrs ...any)
@@ -35,7 +27,6 @@ type AppLogger struct {
 	mu      sync.Mutex
 	buffer  []byte
 	dropped int
-	routine Routine
 	started bool
 	stopped bool
 
@@ -53,8 +44,7 @@ func NewMockLogger() *AppLogger {
 // NewAppLogger creates a new application-level logger that writes to the default log file path
 func NewAppLogger() *AppLogger {
 	l := &AppLogger{
-		path:    LogFilePath(),
-		routine: StartupRoutine,
+		path: LogFilePath(),
 	}
 
 	l.base = slog.New(slog.NewTextHandler(&appLogWriter{owner: l}, &slog.HandlerOptions{
@@ -83,7 +73,7 @@ func (l *AppLogger) Start() error {
 	return nil
 }
 
-// Shutdown stops the logger's background flush routine and flushes any remaining logs to disk. 
+// Shutdown stops the logger's background flush routine and flushes any remaining logs to disk.
 // Called on application shutdown to ensure all logs are persisted.
 func (l *AppLogger) Shutdown() error {
 	l.mu.Lock()
@@ -110,35 +100,19 @@ func (l *AppLogger) Shutdown() error {
 	return l.flush()
 }
 
-// SetRoutine sets the current routine for log entries. 
-// This allows different parts of the application (e.g. startup, runtime, shutdown) to be distinguished in the logs.
-func (l *AppLogger) SetRoutine(lc Routine) {
-	l.mu.Lock()
-	l.routine = lc
-	l.mu.Unlock()
-}
-
-func (l *AppLogger) forRoutine(lc Routine) *slog.Logger {
-	return l.base.With("Routine", string(lc))
-}
-
-func (l *AppLogger) logger() *slog.Logger {
-	return l.forRoutine(l.currentLifecycle())
-}
-
 func (l *AppLogger) Info(msg string, attrs ...any) {
-	l.logger().Info(msg, attrs...)
+	l.base.Info(msg, attrs...)
 }
 
 func (l *AppLogger) Warn(msg string, attrs ...any) {
-	l.logger().Warn(msg, attrs...)
+	l.base.Warn(msg, attrs...)
 }
 
 func (l *AppLogger) Error(msg string, err error, attrs ...any) {
 	if err != nil {
-		attrs = append([]any{"Error", err}, attrs...)
+		attrs = append([]any{"error", err}, attrs...)
 	}
-	l.logger().Error(msg, attrs...)
+	l.base.Error(msg, attrs...)
 }
 
 func (l *AppLogger) runFlusher(interval time.Duration, stopCh <-chan struct{}, doneCh chan<- struct{}) {
@@ -176,10 +150,9 @@ func (l *AppLogger) flush() error {
 	defer f.Close()
 
 	if l.dropped > 0 {
-		if _, err := fmt.Fprintf(f, "time=%q level=WARN msg=%q lifecycle=%q dropped=%d\n",
+		if _, err := fmt.Fprintf(f, "time=%q level=WARN msg=%q dropped=%d\n",
 			time.Now().Format(time.RFC3339Nano),
 			"log buffer overflow; dropped oldest bytes",
-			l.routine,
 			l.dropped,
 		); err != nil {
 			return fmt.Errorf("failed to write log drop notice: %w", err)
@@ -193,12 +166,6 @@ func (l *AppLogger) flush() error {
 	l.buffer = l.buffer[:0]
 	l.dropped = 0
 	return nil
-}
-
-func (l *AppLogger) currentLifecycle() Routine {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	return l.routine
 }
 
 func (l *AppLogger) appendRaw(p []byte) (int, error) {

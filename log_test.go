@@ -14,8 +14,7 @@ func TestAppLoggerShutdownFlushesPendingBuffer(t *testing.T) {
 	logger := NewAppLogger()
 	require.NoError(t, logger.Start())
 
-	logger.SetRoutine(RuntimeRoutine)
-	logger.logger().Info("flush on shutdown")
+	logger.Info("flush on shutdown")
 	require.NoError(t, logger.Shutdown())
 
 	data, err := os.ReadFile(LogFilePath())
@@ -29,7 +28,6 @@ func TestAppLoggerErrorIncludesErrorField(t *testing.T) {
 	logger := NewAppLogger()
 	require.NoError(t, logger.Start())
 
-	logger.SetRoutine(RuntimeRoutine)
 	logger.Error("operation failed", errors.New("boom"), "component", "test")
 	require.NoError(t, logger.Shutdown())
 
@@ -47,7 +45,7 @@ func TestAppLoggerShutdownIsIdempotent(t *testing.T) {
 
 	logger := NewAppLogger()
 	require.NoError(t, logger.Start())
-	logger.logger().Info("first")
+	logger.Info("first")
 	require.NoError(t, logger.Shutdown())
 	require.NoError(t, logger.Shutdown())
 }

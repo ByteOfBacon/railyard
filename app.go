@@ -88,12 +88,9 @@ func (a *App) startup(ctx context.Context) {
 
 	if err := a.Logger.Start(); err != nil {
 		log.Printf("[WARN]: Failed to start app logger: %v", err)
-	} else {
-		a.Logger.SetRoutine(StartupRoutine)
 	}
 
 	runStartupRoutines(a)
-	a.Logger.SetRoutine(RuntimeRoutine)
 }
 
 // shutdown is called when the app shuts down.
@@ -102,8 +99,7 @@ func (a *App) shutdown(ctx context.Context) {
 		return
 	}
 
-	a.Logger.SetRoutine(ShutdownRoutine)
-	a.Logger.logger().Info("application shutdown")
+	a.Logger.Info("application shutdown")
 
 	if err := a.Logger.Shutdown(); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "failed to flush app logs on shutdown: %v\n", err)
