@@ -42,51 +42,50 @@ func readUserProfilesState() (types.UserProfilesState, error) {
 }
 
 // LoadProfiles loads profile state from disk and validates it, bootstrapping to defaults if missing or empty
-func (s *UserProfiles) LoadProfiles() error {
+func (s *UserProfiles) LoadProfiles() (activeProfile types.UserProfile, err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.loaded {
-		return nil
+		return s.ResolveActiveProfile()
 	}
 
 	state, err := readUserProfilesState()
 	if err != nil {
-		return err
+		return types.UserProfile{}, err
 	}
 
 	// If no profiles exist on disk, initialize with default profile
 	if len(state.Profiles) == 0 {
 		bootstrapped := types.InitialProfilesState()
 		if err := writeUserProfilesState(bootstrapped); err != nil {
-			return err
+			return types.UserProfile{}, err
 		}
 		s.setState(bootstrapped)
-		return nil
+		return s.ResolveActiveProfile()
 	}
 
 	validatedState, err := types.ValidateState(state)
 	if err != nil {
-		return err
+		return types.UserProfile{}, err
 	}
 
 	s.setState(validatedState)
-	return nil
+	return s.ResolveActiveProfile()
 }
 
-func (s *UserProfiles) GetActiveProfile() types.UserProfile {
-	profile, _ := s.ResolveActiveProfile()
-	return profile
+func (s *UserProfiles) ResetUserProfiles() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	defaultState := types.InitialProfilesState()
+	s.setState(defaultState)
+	return writeUserProfilesState(defaultState)
 }
 
 // ResolveActiveProfile returns the active profile from loaded in-memory state.
 // Callers must ensure LoadProfiles has completed successfully first.
-func (s *UserProfiles) ResolveActiveProfile() (types.UserProfile, error) {
+func (s *UserProfiles) ResolveActiveProfile() (activeProfile types.UserProfile, err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-
-	if !s.loaded {
-		return types.UserProfile{}, ErrProfilesNotLoaded
-	}
 
 	profile, ok := s.state.Profiles[s.state.ActiveProfileID]
 	if !ok {

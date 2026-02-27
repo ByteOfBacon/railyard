@@ -73,30 +73,27 @@ func (a *App) startup(ctx context.Context) {
 		log.Printf("Warning: failed to resolve config on startup: %v", err)
 	}
 	activeProfile := resolveStartupProfile(a)
-	runStartupTasks(a, activeProfile)
+	runStartupRoutines(a, activeProfile)
 }
 
-func defaultStartupProfile() types.UserProfile {
-	initial := types.InitialProfilesState()
-	return initial.Profiles[initial.ActiveProfileID]
-}
+
+
 
 func resolveStartupProfile(a *App) types.UserProfile {
 	// Ensure user profiles are initialized on startup.
-	if err := a.Profiles.LoadProfiles(); err != nil {
+	if activeProfile, err := a.Profiles.LoadProfiles(); err != nil {
 		// TODO: Surface this error to the user in the UI and allow them to "reset" their profile state and bootstrap to defaults.
 		log.Printf("Warning: failed to load user profiles, falling back to defaults for startup policy: %v", err)
-	}
-
-	activeProfile, err := a.Profiles.ResolveActiveProfile()
-	if err != nil {
-		log.Printf("Warning: failed to resolve active profile, falling back to defaults for startup policy: %v", err)
-		return defaultStartupProfile()
-	}
+		a.Profiles.ResetUserProfiles()
+		resetActiveProfile, _ := a.Profiles.ResolveActiveProfile()
+		return resetActiveProfile
+	} else {
 	return activeProfile
 }
+}
 
-func runStartupTasks(a *App, activeProfile types.UserProfile) {
+func runStartupRoutines(a *App, activeProfile types.UserProfile) {
+	// TODO: Handle auto-update of application version
 	if err := a.Registry.ensureLocalRepo(); err != nil {
 		log.Printf("Warning: failed to ensure local registry repository: %v", err)
 	}
