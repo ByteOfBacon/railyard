@@ -16,18 +16,20 @@ import (
 
 	"railyard/internal/files"
 
+	"railyard/internal/types"
+
 	"go.yaml.in/yaml/v4"
 )
 
-// App struct
-type App struct {
-	ctx      context.Context
-	Registry *Registry
-	Config   *Config
-}
-
 type MissingFilesError struct {
 	Files []string
+}
+
+// App struct
+type App struct {
+	Registry *Registry
+	Config   *Config
+	ctx      context.Context
 }
 
 func (e *MissingFilesError) Error() string {
@@ -42,34 +44,10 @@ func (e *MapAlreadyExistsError) Error() string {
 	return "Map with code '" + e.MapCode + "' has already been installed or would overwrite a vanilla map."
 }
 
-type FileFoundStruct struct {
-	found      bool
-	fileObject *zip.File
-	required   bool
-}
-
-type ConfigData struct {
-	Name             string      `json:"name"`
-	Code             string      `json:"code"`
-	Description      string      `json:"description"`
-	Population       int         `json:"population"`
-	Country          *string     `json:"country"`
-	ThumbnailBbox    *[4]float64 `json:"thumbnail_bbox"`
-	Creator          string      `json:"creator"`
-	Version          string      `json:"version"`
-	InitialViewState struct {
-		Latitude  float64  `json:"latitude"`
-		Longitude float64  `json:"longitude"`
-		Zoom      float64  `json:"zoom"`
-		Pitch     *float64 `json:"pitch"`
-		Bearing   float64  `json:"bearing"`
-	} `json:"initial_view_state"`
-}
-
 type installMapResponse struct {
-	Status  string      `json:"status"`
-	Message string      `json:"message,omitempty"`
-	Data    *ConfigData `json:"data,omitempty"`
+	Status  string            `json:"status"`
+	Message string            `json:"message,omitempty"`
+	Data    *types.ConfigData `json:"data,omitempty"`
 }
 
 type installModResponse struct {
@@ -78,28 +56,12 @@ type installModResponse struct {
 }
 
 type HandleInstallResponse struct {
-	Status  string      `json:"status"`
-	Message string      `json:"message,omitempty"`
-	Data    *ConfigData `json:"data,omitempty"`
+	Status  string            `json:"status"`
+	Message string            `json:"message,omitempty"`
+	Data    *types.ConfigData `json:"data,omitempty"`
 }
 
 // CityInfo represents information about a single city
-type CityInfo struct {
-	Code         string    `yaml:"code" json:"code"`
-	Name         string    `yaml:"name" json:"name"`
-	Version      string    `yaml:"version" json:"version"`
-	Hash         string    `yaml:"hash" json:"hash"`
-	Size         int64     `yaml:"size" json:"size"`
-	LastModified time.Time `yaml:"lastModified" json:"lastModified"`
-	FileName     string    `yaml:"fileName" json:"fileName"`
-}
-
-// CitiesData represents the root structure of the cities YAML file
-type CitiesData struct {
-	Version     string              `yaml:"version" json:"version"`
-	LastUpdated time.Time           `yaml:"lastUpdated" json:"lastUpdated"`
-	Cities      map[string]CityInfo `yaml:"cities" json:"cities"`
-}
 
 // NewApp creates a new App application struct
 func NewApp() *App {
@@ -208,15 +170,15 @@ func (a *App) installMap(zipFilePath string) installMapResponse {
 	}
 	defer reader.Close()
 
-	filesFound := map[string]FileFoundStruct{
-		"config":     {found: false, fileObject: nil, required: true},
-		"demandData": {found: false, fileObject: nil, required: true},
-		"roads":      {found: false, fileObject: nil, required: true},
-		"runways":    {found: false, fileObject: nil, required: true},
-		"buildings":  {found: false, fileObject: nil, required: true},
-		"tiles":      {found: false, fileObject: nil, required: true},
-		"oceanDepth": {found: false, fileObject: nil, required: false},
-		"thumbnail":  {found: false, fileObject: nil, required: false},
+	filesFound := map[string]types.FileFoundStruct{
+		"config":     {Found: false, FileObject: nil, Required: true},
+		"demandData": {Found: false, FileObject: nil, Required: true},
+		"roads":      {Found: false, FileObject: nil, Required: true},
+		"runways":    {Found: false, FileObject: nil, Required: true},
+		"buildings":  {Found: false, FileObject: nil, Required: true},
+		"tiles":      {Found: false, FileObject: nil, Required: true},
+		"oceanDepth": {Found: false, FileObject: nil, Required: false},
+		"thumbnail":  {Found: false, FileObject: nil, Required: false},
 	}
 
 	for _, file := range reader.File {
@@ -245,13 +207,13 @@ func (a *App) installMap(zipFilePath string) installMapResponse {
 			fileFound = "thumbnail"
 		}
 		if fileFound != "" {
-			filesFound[fileFound] = FileFoundStruct{found: true, fileObject: file, required: filesFound[fileFound].required}
+			filesFound[fileFound] = types.FileFoundStruct{Found: true, FileObject: file, Required: filesFound[fileFound].Required}
 		}
 	}
 
 	missingRequiredFiles := []string{}
 	for key, fileInfo := range filesFound {
-		if fileInfo.required && !fileInfo.found {
+		if fileInfo.Required && !fileInfo.Found {
 			missingRequiredFiles = append(missingRequiredFiles, key)
 		}
 	}
@@ -262,7 +224,7 @@ func (a *App) installMap(zipFilePath string) installMapResponse {
 		}
 	}
 
-	configFile, err := filesFound["config"].fileObject.Open()
+	configFile, err := filesFound["config"].FileObject.Open()
 	if err != nil {
 		return installMapResponse{
 			Status:  "error",
@@ -279,8 +241,8 @@ func (a *App) installMap(zipFilePath string) installMapResponse {
 		}
 	}
 
-	var configData ConfigData
-	configData, err = files.ParseJSON[ConfigData](fileBytes, "config file")
+	var configData types.ConfigData
+	configData, err = files.ParseJSON[types.ConfigData](fileBytes, "config file")
 	if err != nil {
 		return installMapResponse{
 			Status:  "error",
@@ -298,7 +260,7 @@ func (a *App) installMap(zipFilePath string) installMapResponse {
 		}
 	}
 
-	os.MkdirAll(path.Join(config.Config.MetroMakerDataPath, "cities", "data", configData.Code), os.ModePerm)
+	os.MkdirAll(path.Join(config.Config.GetMapsFolderPath(), configData.Code), os.ModePerm)
 
 	// Channel to collect errors from all goroutines
 	errorChan := make(chan error, len(filesFound))
@@ -306,9 +268,9 @@ func (a *App) installMap(zipFilePath string) installMapResponse {
 
 	// Process each file (except config) in its own goroutine for maximum parallelization
 	for entry, fileInfo := range filesFound {
-		if fileInfo.found && entry != "config" {
+		if fileInfo.Found && entry != "config" {
 			activeGoroutines++
-			go func(entry string, fileInfo FileFoundStruct) {
+			go func(entry string, fileInfo types.FileFoundStruct) {
 				defer func() {
 					// Always send to channel to signal completion (nil for success)
 					if r := recover(); r != nil {
@@ -317,7 +279,7 @@ func (a *App) installMap(zipFilePath string) installMapResponse {
 				}()
 
 				log.Printf("[DEBUG] Starting %s goroutine...", entry)
-				srcFile, err := fileInfo.fileObject.Open()
+				srcFile, err := fileInfo.FileObject.Open()
 				if err != nil {
 					log.Printf("[ERROR] Failed to open %s file: %v", entry, err)
 					errorChan <- fmt.Errorf("Failed to open file %s: %v", entry, err)
@@ -329,14 +291,22 @@ func (a *App) installMap(zipFilePath string) installMapResponse {
 				// Handle different file types
 				switch entry {
 				case "tiles":
-					tilesDir := path.Join(AppDataRoot(), "tiles")
-					err = os.MkdirAll(tilesDir, os.ModePerm)
-					if err != nil {
-						errorChan <- fmt.Errorf("Failed to create tiles directory: %v", err)
+					stats, err := os.Stat(TilesPath())
+					if os.IsNotExist(err) {
+						err = os.MkdirAll(TilesPath(), os.ModePerm)
+						if err != nil {
+							errorChan <- fmt.Errorf("Failed to create tiles directory: %v", err)
+							return
+						}
+					} else if err != nil {
+						errorChan <- fmt.Errorf("Failed to access tiles directory: %v", err)
+						return
+					} else if !stats.IsDir() {
+						errorChan <- fmt.Errorf("Tiles path exists but is not a directory")
 						return
 					}
 
-					destFilePath := path.Join(tilesDir, configData.Code+".pmtiles")
+					destFilePath := path.Join(TilesPath(), configData.Code+".pmtiles")
 					log.Printf("Installing %s for map %s at %s", entry, configData.Code, destFilePath)
 					destFile, err := os.Create(destFilePath)
 					if err != nil {
@@ -353,15 +323,15 @@ func (a *App) installMap(zipFilePath string) installMapResponse {
 					log.Printf("Successfully installed %s for map %s", entry, configData.Code)
 
 				case "thumbnail":
-					cityMapsExists, err := os.Stat(path.Join(config.Config.MetroMakerDataPath, "public", "data", "city-maps"))
+					cityMapsExists, err := os.Stat(config.Config.GetThumbnailFolderPath())
 					if os.IsNotExist(err) || !cityMapsExists.IsDir() {
-						err = os.MkdirAll(path.Join(config.Config.MetroMakerDataPath, "public", "data", "city-maps"), os.ModePerm)
+						err = os.MkdirAll(config.Config.GetThumbnailFolderPath(), os.ModePerm)
 						if err != nil {
 							errorChan <- fmt.Errorf("Failed to create city-maps directory: %v", err)
 							return
 						}
 					}
-					destFilePath := path.Join(config.Config.MetroMakerDataPath, "public", "data", "city-maps", configData.Code+".svg")
+					destFilePath := path.Join(config.Config.GetThumbnailFolderPath(), configData.Code+".svg")
 					log.Printf("Installing %s for map %s at %s", entry, configData.Code, destFilePath)
 					destFile, err := os.Create(destFilePath)
 					if err != nil {
@@ -379,8 +349,8 @@ func (a *App) installMap(zipFilePath string) installMapResponse {
 
 				default:
 					// Handle compressed files (demandData, roads, runways, buildings, oceanDepth)
-					destFilePath := path.Join(config.Config.MetroMakerDataPath, "cities", "data", configData.Code, path.Base(fileInfo.fileObject.Name)+".gz")
-					fileSize := fileInfo.fileObject.UncompressedSize64
+					destFilePath := path.Join(config.Config.GetMapsFolderPath(), configData.Code, path.Base(fileInfo.FileObject.Name)+".gz")
+					fileSize := fileInfo.FileObject.UncompressedSize64
 					log.Printf("Installing %s for map %s at %s (size: %.2f MB)", entry, configData.Code, destFilePath, float64(fileSize)/(1024*1024))
 
 					destFile, err := os.Create(destFilePath)
@@ -470,7 +440,7 @@ func (a *App) installMod(zipFilePath string, modId string) installModResponse {
 	defer reader.Close()
 
 	// Extract mod bundle to the correct directory
-	modDir := path.Join(config.Config.MetroMakerDataPath, "mods", modId)
+	modDir := path.Join(config.Config.GetModFolderPath(), modId)
 	err = os.MkdirAll(modDir, os.ModePerm)
 	if err != nil {
 		return installModResponse{
@@ -601,7 +571,7 @@ func (a *App) getVanillaMapCodes() []string {
 	}
 	defer reader.Close()
 
-	var citiesData CitiesData
+	var citiesData types.CitiesData
 	decoder := yaml.NewDecoder(reader)
 	err = decoder.Decode(&citiesData)
 	if err != nil {
