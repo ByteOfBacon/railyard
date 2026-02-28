@@ -63,13 +63,13 @@ func testConfig() types.AppConfig {
 }
 
 func testCandidatePaths(t *testing.T) []string {
-		root := t.TempDir()
+	root := t.TempDir()
 
-		filePath := filepath.Join(root, "candidate.exe")
+	filePath := filepath.Join(root, "candidate.exe")
 	require.NoError(t, os.WriteFile(filePath, []byte("x"), 0o644))
 	dirPath := filepath.Join(root, "metro-maker4")
 	require.NoError(t, os.MkdirAll(dirPath, 0o755))
- return []string{
+	return []string{
 		"",
 		"relative/path",
 		filePath,
@@ -248,7 +248,7 @@ func firstValidCandidate(candidates []string) (string, bool) {
 func TestOpenExecutableDialogAutoDetectSuccessDoesNotPersist(t *testing.T) {
 	h := setup(t, types.AppConfig{})
 	metroMakerPath := t.TempDir()
-	
+
 	_, err := h.cfg.updateMetroMakerDataFolder(metroMakerPath)
 	require.NoError(t, err)
 	_, err = h.cfg.SaveConfig()

@@ -55,7 +55,7 @@ func resolveConfigResultFromAppConfig(cfg types.AppConfig) types.ResolveConfigRe
 	}
 }
 
-// resolveConfig returns the current config from disk, or empty defaults when missing. 
+// resolveConfig returns the current config from disk, or empty defaults when missing.
 // This should only be called once on app startup to initialize the in-memory config state
 func (s *Config) resolveConfig() (types.ResolveConfigResult, error) {
 	s.mu.Lock()
