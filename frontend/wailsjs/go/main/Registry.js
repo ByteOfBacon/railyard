@@ -46,10 +46,6 @@ export function GetVersions(arg1, arg2) {
   return window['go']['main']['Registry']['GetVersions'](arg1, arg2);
 }
 
-export function Initialize() {
-  return window['go']['main']['Registry']['Initialize']();
-}
-
 export function Refresh() {
   return window['go']['main']['Registry']['Refresh']();
 }

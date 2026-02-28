@@ -18,8 +18,6 @@ type App struct {
 	ctx        context.Context
 	Profiles *UserProfiles
 	Logger   *AppLogger
-
-	syncSubscriptionsFn func(profileID string, operations []types.SubscriptionOperation) error
 }
 
 type MissingFilesError struct {
@@ -165,10 +163,6 @@ func runStartupRoutines(a *App) {
 }
 
 func (a *App) syncSubscriptions(profileID string, operations []types.SubscriptionOperation) error {
-	if a.syncSubscriptionsFn != nil {
-		return a.syncSubscriptionsFn(profileID, operations)
-	}
-
 	a.Logger.Info("TODO: implement subscription sync", "profile", profileID, "operations", len(operations))
 	// Pseudocode
 	// installedMods, installedMaps := a.Registry.GetInstalledMods(), a.Registry.GetInstalledMaps()

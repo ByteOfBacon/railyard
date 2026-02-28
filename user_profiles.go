@@ -24,7 +24,6 @@ var (
 	ErrProfileNotFound           = errors.New("profile not found")
 	ErrInvalidSubscriptionAction = errors.New("invalid subscription action")
 	ErrInvalidAssetType          = errors.New("invalid asset type")
-	ErrInvalidVersion            = errors.New("invalid version")
 	ErrProfilesNotLoaded         = errors.New("profiles state not loaded")
 	ErrActiveProfileMissing      = errors.New("active profile missing from loaded state")
 )
@@ -155,7 +154,7 @@ func (s *UserProfiles) UpdateSubscriptions(req types.UpdateSubscriptionsRequest)
 
 	operations := make([]types.SubscriptionOperation, 0, len(req.Assets))
 	for assetID, item := range req.Assets {
-		operation, opErr := applySubscriptionMutation(&profile, req.Action, assetID, item)
+		operation, opErr := applySubscriptionMutation(&profile, req.Action, strings.TrimSpace(assetID), item)
 		if opErr != nil {
 			s.logger.Error("Failed to apply subscription mutation", opErr, "asset_id", assetID, "asset_type", item.Type, "action", req.Action)
 			return types.UpdateSubscriptionsResult{}, opErr
@@ -216,18 +215,6 @@ func mutateSubscriptionMap(
 	switch action {
 	case types.SubscriptionActionSubscribe:
 		versionText := strings.TrimSpace(string(item.Version))
-		if _, err := types.NormalizeVersion(types.Version(versionText)); err != nil {
-			return nil, fmt.Errorf("%w: %v", ErrInvalidVersion, err)
-		}
-
-		currentVersion, exists := target[assetID]
-		if exists {
-			equal, err := types.VersionEquals(types.Version(currentVersion), types.Version(versionText))
-			if (err == nil && equal) || (err != nil && strings.TrimSpace(currentVersion) == versionText) {
-				return nil, nil
-			}
-		}
-
 		target[assetID] = versionText
 		return &types.SubscriptionOperation{
 			AssetID: assetID,

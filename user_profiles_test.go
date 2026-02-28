@@ -172,7 +172,7 @@ func TestUpdateSubscriptionsSubscribeWithForceSyncPersistsState(t *testing.T) {
 	require.Equal(t, "2.0.0", persisted.Profiles[types.DefaultProfileID].Subscriptions.Mods["mod-a"])
 }
 
-func TestUpdateSubscriptionsRepeatedSubscribeSameVersionIsNoOp(t *testing.T) {
+func TestUpdateSubscriptionsRepeatedSubscribeSameVersionEmitsOperation(t *testing.T) {
 	setEnv(t)
 	state := types.InitialProfilesState()
 	profile := state.Profiles[types.DefaultProfileID]
@@ -188,7 +188,9 @@ func TestUpdateSubscriptionsRepeatedSubscribeSameVersionIsNoOp(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	require.Empty(t, result.Operations)
+	require.Len(t, result.Operations, 1)
+	require.Equal(t, "map-a", result.Operations[0].AssetID)
+	require.Equal(t, types.Version("1.2.3"), result.Operations[0].Version)
 }
 
 func TestUpdateSubscriptionsUnsubscribeRemovesAndEmitsOperation(t *testing.T) {
@@ -240,21 +242,38 @@ func TestUpdateSubscriptionsRejectsInvalidRequests(t *testing.T) {
 
 	_, err = svc.UpdateSubscriptions(types.UpdateSubscriptionsRequest{
 		ProfileID: types.DefaultProfileID,
+		Action:    types.SubscriptionAction("bad-action"),
+		Assets: map[string]types.SubscriptionUpdateItem{
+			"asset": {Type: types.AssetTypeMap, Version: types.Version("1.0.0")},
+		},
+	})
+	require.ErrorIs(t, err, ErrInvalidSubscriptionAction)
+
+	_, err = svc.UpdateSubscriptions(types.UpdateSubscriptionsRequest{
+		ProfileID: types.DefaultProfileID,
 		Action:    types.SubscriptionActionSubscribe,
 		Assets: map[string]types.SubscriptionUpdateItem{
 			"asset": {Type: types.AssetType("bad-type"), Version: types.Version("1.0.0")},
 		},
 	})
 	require.ErrorIs(t, err, ErrInvalidAssetType)
+}
 
-	_, err = svc.UpdateSubscriptions(types.UpdateSubscriptionsRequest{
+func TestUpdateSubscriptionsAcceptsOpaqueVersionString(t *testing.T) {
+	setEnv(t)
+	svc := newLoadedUserProfilesService(t, types.InitialProfilesState())
+
+	result, err := svc.UpdateSubscriptions(types.UpdateSubscriptionsRequest{
 		ProfileID: types.DefaultProfileID,
 		Action:    types.SubscriptionActionSubscribe,
 		Assets: map[string]types.SubscriptionUpdateItem{
-			"asset": {Type: types.AssetTypeMap, Version: types.Version("not-semver")},
+			"map-x": {Type: types.AssetTypeMap, Version: types.Version("not-semver")},
 		},
 	})
-	require.ErrorIs(t, err, ErrInvalidVersion)
+	require.NoError(t, err)
+	require.Equal(t, "not-semver", result.Profile.Subscriptions.Maps["map-x"])
+	require.Len(t, result.Operations, 1)
+	require.Equal(t, types.Version("not-semver"), result.Operations[0].Version)
 }
 
 func newTestUserProfile(id string, name string) types.UserProfile {

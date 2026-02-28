@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"railyard/internal/types"
 	"testing"
 
@@ -19,15 +18,8 @@ func newLoadedTestApp(t *testing.T) *App {
 	return app
 }
 
-func TestAppUpdateSubscriptionsInvokesSyncWhenForceSyncAndOperationsExist(t *testing.T) {
+func TestAppUpdateSubscriptionsForceSyncReturnsOperations(t *testing.T) {
 	app := newLoadedTestApp(t)
-	callCount := 0
-	app.syncSubscriptionsFn = func(profileID string, operations []types.SubscriptionOperation) error {
-		callCount++
-		require.Equal(t, types.DefaultProfileID, profileID)
-		require.Len(t, operations, 1)
-		return nil
-	}
 
 	result, err := app.UpdateSubscriptions(types.UpdateSubscriptionsRequest{
 		ProfileID: types.DefaultProfileID,
@@ -39,16 +31,12 @@ func TestAppUpdateSubscriptionsInvokesSyncWhenForceSyncAndOperationsExist(t *tes
 	})
 	require.NoError(t, err)
 	require.Len(t, result.Operations, 1)
-	require.Equal(t, 1, callCount)
+	require.True(t, result.Persisted)
+	require.Equal(t, types.DefaultProfileID, result.Profile.ID)
 }
 
-func TestAppUpdateSubscriptionsDoesNotInvokeSyncWhenForceSyncIsFalse(t *testing.T) {
+func TestAppUpdateSubscriptionsWithoutForceSyncReturnsOperations(t *testing.T) {
 	app := newLoadedTestApp(t)
-	callCount := 0
-	app.syncSubscriptionsFn = func(profileID string, operations []types.SubscriptionOperation) error {
-		callCount++
-		return nil
-	}
 
 	result, err := app.UpdateSubscriptions(types.UpdateSubscriptionsRequest{
 		ProfileID: types.DefaultProfileID,
@@ -60,25 +48,19 @@ func TestAppUpdateSubscriptionsDoesNotInvokeSyncWhenForceSyncIsFalse(t *testing.
 	})
 	require.NoError(t, err)
 	require.Len(t, result.Operations, 1)
-	require.Equal(t, 0, callCount)
+	require.False(t, result.Persisted)
 }
 
-func TestAppUpdateSubscriptionsBubblesSyncError(t *testing.T) {
+func TestAppUpdateSubscriptionsBubblesProfileError(t *testing.T) {
 	app := newLoadedTestApp(t)
-	syncErr := errors.New("sync failed")
-	app.syncSubscriptionsFn = func(profileID string, operations []types.SubscriptionOperation) error {
-		return syncErr
-	}
 
-	result, err := app.UpdateSubscriptions(types.UpdateSubscriptionsRequest{
-		ProfileID: types.DefaultProfileID,
+	_, err := app.UpdateSubscriptions(types.UpdateSubscriptionsRequest{
+		ProfileID: "missing-profile",
 		Action:    types.SubscriptionActionSubscribe,
 		Assets: map[string]types.SubscriptionUpdateItem{
 			"map-a": {Type: types.AssetTypeMap, Version: types.Version("2.0.0")},
 		},
 		ForceSync: true,
 	})
-	require.ErrorIs(t, err, syncErr)
-	require.Len(t, result.Operations, 1)
-	require.Equal(t, types.DefaultProfileID, result.Profile.ID)
+	require.ErrorIs(t, err, ErrProfileNotFound)
 }
