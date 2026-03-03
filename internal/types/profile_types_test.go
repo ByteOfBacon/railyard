@@ -39,7 +39,7 @@ func TestAreValidSystemPreferences(t *testing.T) {
 	require.True(t, areValidSystemPreferences(SystemPreferences{}))
 	require.True(t, areValidSystemPreferences(SystemPreferences{
 		RefreshRegistryOnStartup: true,
-		AutoUpdateSubscriptions:  true,
+		// AutoUpdateSubscriptions:  true,
 	}))
 }
 

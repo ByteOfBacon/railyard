@@ -35,7 +35,7 @@ type UIPreferences struct {
 // SystemPreferences represents user preferences related to application behavior and features.
 type SystemPreferences struct {
 	RefreshRegistryOnStartup bool `json:"refreshRegistryOnStartup"` // Whether to refresh the registry on application startup
-	AutoUpdateSubscriptions  bool `json:"autoUpdateSubscriptions"`  // Whether to automatically update subscribed maps/mods when new versions are released
+	// AutoUpdateSubscriptions  bool `json:"autoUpdateSubscriptions"`  // Whether to automatically update subscribed maps/mods when new versions are released
 }
 
 // Favorites represents favorite authors/maps/mods for a profile.
@@ -124,7 +124,7 @@ func defaultUIPreferences() UIPreferences {
 func defaultSystemPreferences() SystemPreferences {
 	return SystemPreferences{
 		RefreshRegistryOnStartup: true,
-		AutoUpdateSubscriptions:  false,
+		// AutoUpdateSubscriptions:  false,
 	}
 }
 

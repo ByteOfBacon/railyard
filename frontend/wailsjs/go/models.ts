@@ -472,7 +472,6 @@ export namespace types {
 	}
 	export class SystemPreferences {
 	    refreshRegistryOnStartup: boolean;
-	    autoUpdateSubscriptions: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new SystemPreferences(source);
@@ -481,7 +480,6 @@ export namespace types {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.refreshRegistryOnStartup = source["refreshRegistryOnStartup"];
-	        this.autoUpdateSubscriptions = source["autoUpdateSubscriptions"];
 	    }
 	}
 	export class UIPreferences {

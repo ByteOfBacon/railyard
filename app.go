@@ -154,12 +154,6 @@ func runStartupRoutines(a *App) {
 			a.Logger.Warn("Failed to refresh registry on startup", "error", err)
 		}
 	}
-
-	if activeProfile.SystemPreferences.AutoUpdateSubscriptions {
-		if err := a.syncSubscriptions(activeProfile.ID, nil); err != nil {
-			a.Logger.Warn("Failed to sync subscriptions on startup", "error", err)
-		}
-	}
 }
 
 func (a *App) syncSubscriptions(profileID string, operations []types.SubscriptionOperation) error {
