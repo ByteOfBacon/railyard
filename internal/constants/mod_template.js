@@ -1,9 +1,4 @@
-package constants
-
-const MOD_VERSION = "1.0.0"
-
-const MOD_TEMPLATE = `
-const config = $REPLACE;
+const config = $CONFIG;
 function getFlagEmoji (countryCode) {
 	let codePoints = countryCode.toUpperCase().split('').map(char =>  127397 + char.charCodeAt());
 	return String.fromCodePoint(...codePoints);
@@ -71,7 +66,7 @@ config.places.forEach(async place => {
         cityCode: place.code,
         tilesUrl: "http://127.0.0.1:" + config.port + "/" + place.code + "/{z}/{x}/{y}.mvt",
         foundationTilesUrl: "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
-        maxZoom: config["tile-zoom-level"]
+        maxZoom: config.tileZoomLevel
     });
 
     window.SubwayBuilderAPI.cities.setCityDataFiles(place.code, { // auto appends .gz, is this intended? if it is then its fine if not then that has to be removed so we can manually set the .gz file extension
@@ -91,4 +86,3 @@ Object.entries(tabs).forEach(([country, codes]) => {
       cityCodes: codes,
     });
 });
-`

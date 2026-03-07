@@ -13,7 +13,7 @@ type FileFoundStruct struct {
 }
 
 type MetroMakerModConfig struct {
-	TileZoomLevel int          `json:"tile_zoom_level"`
+	TileZoomLevel int          `json:"tileZoomLevel"`
 	Places        []ConfigData `json:"places"`
 	Port          int          `json:"port"`
 }

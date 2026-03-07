@@ -279,11 +279,15 @@ func (a *App) StopGame() error {
 	a.gameMu.Lock()
 	cmd := a.gameCmd
 	a.gameMu.Unlock()
-	a.pmtilesServer.Close()
 
 	if cmd == nil || cmd.ProcessState != nil {
 		return fmt.Errorf("game is not running")
 	}
+
+	if a.pmtilesServer != nil {
+		a.pmtilesServer.Close()
+	}
+
 	return cmd.Process.Kill()
 }
 
@@ -293,7 +297,7 @@ func (a *App) startPMTilesServer() (int, error) {
 		a.Logger.Warn("Failed to start PMTiles server listener", "error", err)
 		return -1, err
 	}
-	port := listener.Addr().(*net.TCPAddr).Port // TODO: Pass port to mod generation
+	port := listener.Addr().(*net.TCPAddr).Port
 	listener.Close()
 
 	a.Logger.Info(fmt.Sprintf("Starting PMTiles server on port %d", port))
@@ -351,7 +355,7 @@ func (a *App) generateMod(port int) error {
 	if err != nil {
 		return fmt.Errorf("failed to marshal mod config: %w", err)
 	}
-	modContent := strings.ReplaceAll(constants.MOD_TEMPLATE, "$REPLACE", string(stringifiedConfig))
+	modContent := constants.ModTemplateWithConfig(string(stringifiedConfig))
 	manifestContent, err := json.Marshal(manifest)
 	if err != nil {
 		return fmt.Errorf("failed to marshal mod manifest: %w", err)

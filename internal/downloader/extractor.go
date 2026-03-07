@@ -212,7 +212,13 @@ func extractMap(d *Downloader, filePath string) types.MapExtractResponse {
 	}
 
 	if !filesFound["thumbnail"].Found && configData.ThumbnailBbox != nil {
-		thumbnailData, err := utils.GenerateThumbnail(configData.Code, configData)
+		srv, port, srvErr := utils.StartTempPMTilesServer()
+		if srvErr != nil {
+			return d.warnMapExtractResponse("Failed to start PMTiles server for thumbnail generation, but map was extracted successfully.", configData, "file_path", filePath, "map_code", configData.Code)
+		}
+		defer srv.Close()
+
+		thumbnailData, err := utils.GenerateThumbnail(configData.Code, configData, port)
 		if err != nil {
 			return d.warnMapExtractResponse("Failed to generate thumbnail, but map was extracted successfully. You can try generating the thumbnail later from the map details page.", configData, "file_path", filePath, "map_code", configData.Code)
 		}
