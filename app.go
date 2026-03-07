@@ -38,8 +38,9 @@ type App struct {
 	Profiles   *profiles.UserProfiles
 	Logger     *logger.AppLogger
 
-	gameMu  sync.Mutex
-	gameCmd *exec.Cmd
+	gameMu        sync.Mutex
+	gameCmd       *exec.Cmd
+	pmtilesServer *http.Server
 }
 
 // NewApp creates a new App application struct
@@ -278,6 +279,7 @@ func (a *App) StopGame() error {
 	a.gameMu.Lock()
 	cmd := a.gameCmd
 	a.gameMu.Unlock()
+	a.pmtilesServer.Close()
 
 	if cmd == nil || cmd.ProcessState != nil {
 		return fmt.Errorf("game is not running")
@@ -312,7 +314,11 @@ func (a *App) startPMTilesServer() (int, error) {
 			return
 		}
 		errorChan <- nil
-		l.Error("PMTiles error: ", http.ListenAndServe(fmt.Sprintf(":%d", port), pmtiles.NewCors("*").Handler(mux)))
+		a.pmtilesServer = &http.Server{
+			Addr:    fmt.Sprintf(":%d", port),
+			Handler: mux,
+		}
+		l.Error("PMTiles error: ", a.pmtilesServer.ListenAndServe())
 	}(a.Logger, port, channel)
 	return port, <-channel
 }
