@@ -62,6 +62,13 @@ func NewApp() *App {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.Config.SetContext(ctx)
+	a.Downloader.OnProgress = func(itemId string, received int64, total int64) {
+		wailsruntime.EventsEmit(ctx, "download:progress", map[string]interface{}{
+			"itemId":   itemId,
+			"received": received,
+			"total":    total,
+		})
+	}
 	if _, err := a.Config.ResolveConfig(); err != nil {
 		log.Printf("Warning: failed to resolve config on startup: %v", err)
 	}
@@ -350,6 +357,9 @@ func (a *App) generateMod(port int) error {
 			Name: "Railyard",
 		},
 		Main: "index.js",
+		Dependencies: map[string]string{
+			"subway-builder": ">=1.0.0",
+		},
 	}
 	stringifiedConfig, err := json.Marshal(config)
 	if err != nil {

@@ -69,6 +69,9 @@ func (r *Registry) getGitHubVersions(repo string) ([]types.VersionInfo, error) {
 		}
 		for _, asset := range rel.Assets {
 			v.Downloads += asset.DownloadCount
+			if asset.Name == "manifest.json" {
+				v.Manifest = asset.BrowserDownloadURL
+			}
 		}
 		if len(rel.Assets) > 0 {
 			v.DownloadURL = rel.Assets[0].BrowserDownloadURL
@@ -121,6 +124,7 @@ func (r *Registry) getCustomVersions(updateURL string) ([]types.VersionInfo, err
 			DownloadURL: v.Download,
 			GameVersion: v.GameVersion,
 			SHA256:      v.SHA256,
+			Manifest:    v.Manifest,
 		})
 	}
 

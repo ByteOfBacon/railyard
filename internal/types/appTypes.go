@@ -26,7 +26,8 @@ type MetroMakerModManifest struct {
 	Author      struct {
 		Name string `json:"name"`
 	} `json:"author"`
-	Main string `json:"main"`
+	Main         string            `json:"main"`
+	Dependencies map[string]string `json:"dependencies"`
 }
 
 // ConfigData represents the structure of the config.json file found within a map zip file, containing metadata about the map and its initial view state.

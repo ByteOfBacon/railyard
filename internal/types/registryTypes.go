@@ -74,6 +74,7 @@ type VersionInfo struct {
 	GameVersion string `json:"game_version"`
 	SHA256      string `json:"sha256"`
 	Downloads   int    `json:"downloads"`
+	Manifest    string `json:"manifest,omitempty"`
 }
 
 // GithubRelease maps fields from the GitHub Releases API response.
@@ -104,4 +105,5 @@ type CustomUpdateVersion struct {
 	Changelog   string `json:"changelog"`
 	Download    string `json:"download"`
 	SHA256      string `json:"sha256"`
+	Manifest    string `json:"manifest,omitempty"`
 }

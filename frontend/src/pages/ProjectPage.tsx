@@ -51,7 +51,9 @@ export function ProjectPage() {
     GetVersions(item.update.type, source)
       .then((v) => {
         if (!cancelled) {
-          setVersions(v || []);
+          const all = v || [];
+          // For mods, only show versions that have a manifest.json
+          setVersions(type === "mods" ? all.filter((ver) => ver.manifest) : all);
           setVersionsLoading(false);
         }
       })

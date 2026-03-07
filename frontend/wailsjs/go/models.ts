@@ -586,6 +586,7 @@ export namespace types {
 	    game_version: string;
 	    sha256: string;
 	    downloads: number;
+	    manifest?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new VersionInfo(source);
@@ -601,6 +602,7 @@ export namespace types {
 	        this.game_version = source["game_version"];
 	        this.sha256 = source["sha256"];
 	        this.downloads = source["downloads"];
+	        this.manifest = source["manifest"];
 	    }
 	}
 

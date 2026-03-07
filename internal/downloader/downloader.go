@@ -17,12 +17,17 @@ import (
 	"go.yaml.in/yaml/v4"
 )
 
+// ProgressFunc is a callback for reporting download progress.
+// itemId identifies what is being downloaded, received is bytes downloaded so far, total is the total size (-1 if unknown).
+type ProgressFunc func(itemId string, received int64, total int64)
+
 type Downloader struct {
 	tempPath    string
 	mapTilePath string
 	Registry    *registry.Registry
 	Config      *config.Config
 	Logger      logger.Logger
+	OnProgress  ProgressFunc
 }
 
 // NewDownloader creates a new Downloader instance with necessary paths and references.
@@ -214,7 +219,7 @@ func (d *Downloader) InstallMod(modId string, version string) types.GenericRespo
 		return d.throwErrorSimple("Specified version not found for mod", "mod_id", modId, "version", version)
 	}
 
-	downloadResp := d.downloadTempZip(versionInfo.DownloadURL)
+	downloadResp := d.downloadTempZip(versionInfo.DownloadURL, modId)
 	if downloadResp.Status != types.ResponseSuccess {
 		os.Remove(downloadResp.Path)
 		return d.throwErrorSimple("Failed to download mod zip: "+downloadResp.Message, "mod_id", modId, "version", version)
@@ -263,7 +268,7 @@ func (d *Downloader) InstallMap(mapId string, version string) types.MapExtractRe
 		return d.throwMapExtractErrorSimple("Specified version not found for map", "map_id", mapId, "version", version)
 	}
 
-	downloadResp := d.downloadTempZip(versionInfo.DownloadURL)
+	downloadResp := d.downloadTempZip(versionInfo.DownloadURL, mapId)
 	if downloadResp.Status != types.ResponseSuccess {
 		os.Remove(downloadResp.Path)
 		return d.throwMapExtractErrorSimple("Failed to download map zip: "+downloadResp.Message, "map_id", mapId, "version", version)
@@ -282,8 +287,26 @@ func (d *Downloader) InstallMap(mapId string, version string) types.MapExtractRe
 	return extractResp
 }
 
+// progressReader wraps an io.Reader to report download progress via a callback.
+type progressReader struct {
+	reader   io.Reader
+	total    int64
+	received int64
+	itemId   string
+	onProgress ProgressFunc
+}
+
+func (pr *progressReader) Read(p []byte) (int, error) {
+	n, err := pr.reader.Read(p)
+	pr.received += int64(n)
+	if pr.onProgress != nil {
+		pr.onProgress(pr.itemId, pr.received, pr.total)
+	}
+	return n, err
+}
+
 // downloadTempZip downloads a zip file from the given URL and saves it to a temporary location, returning the path or an error message.
-func (d *Downloader) downloadTempZip(url string) types.DownloadTempResponse {
+func (d *Downloader) downloadTempZip(url string, itemId string) types.DownloadTempResponse {
 	if err := os.MkdirAll(d.tempPath, os.ModePerm); err != nil {
 		return d.throwDownloadError("Failed to create temp directory", err, "url", url)
 	}
@@ -304,7 +327,17 @@ func (d *Downloader) downloadTempZip(url string) types.DownloadTempResponse {
 		return d.throwDownloadErrorSimple("Failed to download file: unexpected status code", "url", url, "status_code", zip.StatusCode)
 	}
 
-	_, err = io.Copy(file, zip.Body)
+	var reader io.Reader = zip.Body
+	if d.OnProgress != nil {
+		reader = &progressReader{
+			reader:     zip.Body,
+			total:      zip.ContentLength,
+			itemId:     itemId,
+			onProgress: d.OnProgress,
+		}
+	}
+
+	_, err = io.Copy(file, reader)
 	if err != nil {
 		return d.throwDownloadError("Failed to save file", err, "url", url)
 	}

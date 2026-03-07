@@ -10,6 +10,7 @@ import { useInstalledStore } from "@/stores/installed-store";
 import { useProfileStore } from "@/stores/profile-store";
 import { useGameStore } from "@/stores/game-store";
 import { useTheme } from "@/hooks/use-theme";
+import { DownloadNotification } from "@/components/layout/DownloadNotification";
 import { HomePage } from "@/pages/HomePage";
 import { SearchPage } from "@/pages/SearchPage";
 import { ProjectPage } from "@/pages/ProjectPage";
@@ -70,6 +71,7 @@ function App() {
           <Route path="/settings" component={SettingsPage} />
         </Switch>
       </Layout>
+      <DownloadNotification />
       <Toaster />
     </TooltipProvider>
   );
