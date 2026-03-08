@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from "react";
 import { useRoute, Link } from "wouter";
 import { useRegistryStore } from "@/stores/registry-store";
 import { GetVersions } from "../../wailsjs/go/registry/Registry";
+import { GetGameVersion } from "../../wailsjs/go/main/App";
+import { isCompatible } from "@/lib/semver";
 import { types } from "../../wailsjs/go/models";
 import {
   Breadcrumb,
@@ -36,6 +38,11 @@ export function ProjectPage() {
   const [versions, setVersions] = useState<types.VersionInfo[]>([]);
   const [versionsLoading, setVersionsLoading] = useState(true);
   const [versionsError, setVersionsError] = useState<string | null>(null);
+  const [gameVersion, setGameVersion] = useState<string>("");
+
+  useEffect(() => {
+    GetGameVersion().then((v) => setGameVersion(v || "")).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!item) return;
@@ -67,6 +74,10 @@ export function ProjectPage() {
   }, [item?.update.type, item?.update.repo, item?.update.url]);
 
   const latestVersion = versions[0];
+  const latestCompatibleVersion = useMemo(() => {
+    if (!gameVersion) return latestVersion;
+    return versions.find((v) => isCompatible(gameVersion, v.game_version) !== false) ?? latestVersion;
+  }, [versions, gameVersion, latestVersion]);
   const gallery = useMemo(() => item?.gallery || [], [item?.gallery]);
 
   if (!item || !type) {
@@ -103,11 +114,11 @@ export function ProjectPage() {
 
       <ProjectHero type={type} id={item.id} gallery={gallery} />
 
-      <ProjectInfo type={type} item={item} latestVersion={latestVersion} versionsLoading={versionsLoading} />
+      <ProjectInfo type={type} item={item} latestVersion={latestVersion} latestCompatibleVersion={latestCompatibleVersion} versionsLoading={versionsLoading} gameVersion={gameVersion} />
 
       <Separator />
 
-      <VersionsTable type={type} itemId={item.id} itemName={item.name} update={item.update} versions={versions} loading={versionsLoading} error={versionsError} />
+      <VersionsTable type={type} itemId={item.id} itemName={item.name} update={item.update} versions={versions} loading={versionsLoading} error={versionsError} gameVersion={gameVersion} />
     </div>
   );
 }

@@ -1,12 +1,16 @@
 package downloader
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"path"
 	"slices"
+	"strings"
 
 	"railyard/internal/config"
 	"railyard/internal/logger"
@@ -192,6 +196,7 @@ func (d *Downloader) UninstallMap(mapId string) types.GenericResponse {
 
 // InstallMod handles the installation of a mod given its ID and version, including downloading, extracting, and updating the registry.
 func (d *Downloader) InstallMod(modId string, version string) types.GenericResponse {
+	d.Logger.Info("InstallMod started", "mod_id", modId, "version", version)
 	if !d.Config.GetConfig().Validation.IsValid() {
 		return d.throwErrorSimple("Cannot install mod because app config paths are not properly configured. " +
 			"Please set valid paths in the config before installing mods.")
@@ -205,10 +210,17 @@ func (d *Downloader) InstallMod(modId string, version string) types.GenericRespo
 	if modInfo.Update.Type == "github" {
 		source = modInfo.Update.Repo
 	}
+	d.Logger.Info("Fetching available versions", "mod_id", modId, "update_type", modInfo.Update.Type, "source", source)
 	versions, err := d.Registry.GetVersions(modInfo.Update.Type, source)
 	if err != nil {
 		return d.throwError("Failed to get mod versions from registry", err, "mod_id", modId)
 	}
+
+	availableVersions := make([]string, len(versions))
+	for i, v := range versions {
+		availableVersions[i] = v.Version
+	}
+	d.Logger.Info("Fetched available versions", "mod_id", modId, "requested_version", version, "available_versions", availableVersions)
 
 	var versionInfo *types.VersionInfo = nil
 	for _, v := range versions {
@@ -218,15 +230,22 @@ func (d *Downloader) InstallMod(modId string, version string) types.GenericRespo
 		}
 	}
 	if versionInfo == nil {
-		return d.throwErrorSimple("Specified version not found for mod", "mod_id", modId, "version", version)
+		return d.throwErrorSimple("Specified version not found for mod", "mod_id", modId, "version", version, "available_versions", availableVersions)
 	}
 
+	d.Logger.Info("Downloading mod", "mod_id", modId, "version", version, "download_url", versionInfo.DownloadURL)
 	downloadResp := d.downloadTempZip(versionInfo.DownloadURL, modId)
 	if downloadResp.Status != types.ResponseSuccess {
 		os.Remove(downloadResp.Path)
 		return d.throwErrorSimple("Failed to download mod zip: "+downloadResp.Message, "mod_id", modId, "version", version)
 	}
 
+	if err := d.verifySHA256(downloadResp.Path, versionInfo.SHA256); err != nil {
+		os.Remove(downloadResp.Path)
+		return d.throwError("SHA-256 integrity check failed", err, "mod_id", modId, "version", version)
+	}
+
+	d.Logger.Info("Extracting mod", "mod_id", modId, "version", version, "temp_path", downloadResp.Path)
 	extractResp := d.handleModExtract(downloadResp.Path, modId)
 	if extractResp.Status != types.ResponseSuccess {
 		os.Remove(downloadResp.Path)
@@ -237,11 +256,13 @@ func (d *Downloader) InstallMod(modId string, version string) types.GenericRespo
 	if err := d.Registry.WriteInstalledToDisk(); err != nil {
 		d.Logger.Warn("Failed to persist installed state after installing mod", "error", err)
 	}
+	d.Logger.Info("InstallMod completed", "mod_id", modId, "version", version)
 	return d.successResponse("Mod installed successfully", "mod_id", modId, "version", version)
 }
 
 // InstallMap handles the installation of a map given its ID and version, including downloading, extracting, validating files, and updating the registry.
 func (d *Downloader) InstallMap(mapId string, version string) types.MapExtractResponse {
+	d.Logger.Info("InstallMap started", "map_id", mapId, "version", version)
 	if !d.Config.GetConfig().Validation.IsValid() {
 		return d.throwMapExtractErrorSimple("Invalid configuration", "map_id", mapId, "version", version)
 	}
@@ -254,10 +275,17 @@ func (d *Downloader) InstallMap(mapId string, version string) types.MapExtractRe
 	if mapInfo.Update.Type == "github" {
 		source = mapInfo.Update.Repo
 	}
+	d.Logger.Info("Fetching available versions", "map_id", mapId, "update_type", mapInfo.Update.Type, "source", source)
 	versions, err := d.Registry.GetVersions(mapInfo.Update.Type, source)
 	if err != nil {
 		return d.throwMapExtractError("Failed to get map versions from registry", err, "map_id", mapId)
 	}
+
+	availableVersions := make([]string, len(versions))
+	for i, v := range versions {
+		availableVersions[i] = v.Version
+	}
+	d.Logger.Info("Fetched available versions", "map_id", mapId, "requested_version", version, "available_versions", availableVersions)
 
 	var versionInfo *types.VersionInfo = nil
 	for _, v := range versions {
@@ -267,15 +295,22 @@ func (d *Downloader) InstallMap(mapId string, version string) types.MapExtractRe
 		}
 	}
 	if versionInfo == nil {
-		return d.throwMapExtractErrorSimple("Specified version not found for map", "map_id", mapId, "version", version)
+		return d.throwMapExtractErrorSimple("Specified version not found for map", "map_id", mapId, "version", version, "available_versions", availableVersions)
 	}
 
+	d.Logger.Info("Downloading map", "map_id", mapId, "version", version, "download_url", versionInfo.DownloadURL)
 	downloadResp := d.downloadTempZip(versionInfo.DownloadURL, mapId)
 	if downloadResp.Status != types.ResponseSuccess {
 		os.Remove(downloadResp.Path)
 		return d.throwMapExtractErrorSimple("Failed to download map zip: "+downloadResp.Message, "map_id", mapId, "version", version)
 	}
 
+	if err := d.verifySHA256(downloadResp.Path, versionInfo.SHA256); err != nil {
+		os.Remove(downloadResp.Path)
+		return d.throwMapExtractError("SHA-256 integrity check failed", err, "map_id", mapId, "version", version)
+	}
+
+	d.Logger.Info("Extracting map", "map_id", mapId, "version", version, "temp_path", downloadResp.Path)
 	extractResp := d.handleMapExtract(downloadResp.Path)
 	if extractResp.Status == types.ResponseError {
 		os.Remove(downloadResp.Path)
@@ -286,6 +321,7 @@ func (d *Downloader) InstallMap(mapId string, version string) types.MapExtractRe
 	if err := d.Registry.WriteInstalledToDisk(); err != nil {
 		d.Logger.Warn("Failed to persist installed state after installing map", "error", err)
 	}
+	d.Logger.Info("InstallMap completed", "map_id", mapId, "version", version)
 	return extractResp
 }
 
@@ -345,6 +381,31 @@ func (d *Downloader) downloadTempZip(url string, itemId string) types.DownloadTe
 	}
 
 	return d.successDownloadResponse("File downloaded successfully", file.Name(), "url", url)
+}
+
+// verifySHA256 checks the SHA-256 hash of a downloaded file against an expected hash.
+// If expectedHash is empty, the check is skipped (GitHub releases rely on GitHub's own integrity).
+func (d *Downloader) verifySHA256(filePath string, expectedHash string) error {
+	if expectedHash == "" {
+		return nil
+	}
+
+	f, err := os.Open(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to open file for hash verification: %w", err)
+	}
+	defer f.Close()
+
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return fmt.Errorf("failed to compute SHA-256: %w", err)
+	}
+
+	actual := hex.EncodeToString(h.Sum(nil))
+	if !strings.EqualFold(actual, expectedHash) {
+		return fmt.Errorf("expected %s, got %s", expectedHash, actual)
+	}
+	return nil
 }
 
 // getVanillaMapCodes returns the city codes of maps included with the game.
