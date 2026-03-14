@@ -29,5 +29,5 @@ modules:
     build-commands:
       - cd frontend && npm run build
       - go build -mod=vendor -tags "desktop,production,webkit2_41" -ldflags "-s -w" -o /app/bin/railyard .
-      - install ./build/linux/railyard.desktop /app/share/applications/railyard.desktop
-      - install ./build/appicon.png /app/share/icons/hicolor/512x512/apps/railyard.png
+      - install -Dm644 ./build/linux/railyard.desktop /app/share/applications/railyard.desktop
+      - install -Dm644 ./build/appicon.png /app/share/icons/hicolor/512x512/apps/railyard.png
