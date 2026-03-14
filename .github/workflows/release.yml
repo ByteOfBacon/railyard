@@ -100,7 +100,6 @@ jobs:
         run: cd frontend && pnpm install
 
       - name: Build Linux (amd64 current)
-        if: ${{matrix.type == 'current'}}
         run: |
           echo -e $TYPE > internal/constants/linux_type.txt
           echo -e $VERSION > internal/constants/version.txt
