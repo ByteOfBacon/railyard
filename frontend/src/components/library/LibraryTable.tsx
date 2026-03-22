@@ -28,6 +28,7 @@ import { assetTypeToListingPath } from '@/lib/asset-types';
 import type { SortDirection, SortState } from '@/lib/constants';
 import { toggleSortField } from '@/lib/constants';
 import { getCountryFlagIcon } from '@/lib/flags';
+import { getLocalAccentClasses } from '@/lib/local-accent';
 import { formatSourceQuality } from '@/lib/map-filter-values';
 import { MAX_CARD_BADGES } from '@/lib/search';
 import {
@@ -57,6 +58,11 @@ interface SortableHeaderButtonProps {
   direction: SortDirection;
   onClick: () => void;
 }
+
+const UPDATE_ICON_ACCENT_CLASS = getLocalAccentClasses('update').iconButton;
+const FILES_ICON_ACCENT_CLASS = getLocalAccentClasses('files').iconButton;
+const UNINSTALL_ICON_ACCENT_CLASS =
+  getLocalAccentClasses('uninstall').iconButton;
 
 function SortableHeaderButton({
   label,
@@ -219,8 +225,7 @@ function LibraryTableRow({
 }: LibraryTableRowProps) {
   const [uninstallOpen, setUninstallOpen] = useState(false);
   const [updateOpen, setUpdateOpen] = useState(false);
-  const actionButtonBaseClass =
-    'h-8 w-8 transition-colors hover:!bg-muted/70 dark:hover:!bg-muted/70';
+  const actionButtonBaseClass = 'h-8 w-8 transition-colors';
   const removeSelected = useLibraryStore((s) => s.removeSelected);
   const metroMakerDataPath = useConfigStore(
     (s) => s.config?.metroMakerDataPath,
@@ -228,6 +233,7 @@ function LibraryTableRow({
   const isMap = entry.type === 'map';
   const map = isMap ? (entry.item as types.MapManifest) : null;
   const isLocalEntry = entry.isLocal;
+  const isLocalMap = isMap && isLocalEntry;
   const mapBadges = map
     ? [
         map.location,
@@ -297,12 +303,18 @@ function LibraryTableRow({
           <div className="min-w-0">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <Link
-                  href={`/project/${assetTypeToListingPath(entry.type)}/${entry.item.id}`}
-                  className="font-medium text-sm text-foreground hover:underline truncate"
-                >
-                  {entry.item.name}
-                </Link>
+                {isLocalMap ? (
+                  <span className="font-medium text-sm text-foreground truncate">
+                    {entry.item.name}
+                  </span>
+                ) : (
+                  <Link
+                    href={`/project/${assetTypeToListingPath(entry.type)}/${entry.item.id}`}
+                    className="font-medium text-sm text-foreground hover:underline truncate"
+                  >
+                    {entry.item.name}
+                  </Link>
+                )}
               </div>
               <p className="text-xs text-muted-foreground truncate">
                 by {entry.item.author}
@@ -389,7 +401,7 @@ function LibraryTableRow({
                 size="icon"
                 className={cn(
                   actionButtonBaseClass,
-                  'text-[var(--update-primary)]/70 hover:text-[var(--update-primary)]',
+                  UPDATE_ICON_ACCENT_CLASS,
                 )}
                 onClick={() => setUpdateOpen(true)}
                 aria-label="Update to latest"
@@ -404,7 +416,7 @@ function LibraryTableRow({
                 size="icon"
                 className={cn(
                   actionButtonBaseClass,
-                  'text-[var(--folder-primary)]/85 hover:text-[var(--folder-primary)]',
+                  FILES_ICON_ACCENT_CLASS,
                 )}
                 onClick={handleOpenInstallFolder}
                 aria-label="Open install folder"
@@ -418,7 +430,7 @@ function LibraryTableRow({
                 size="icon"
                 className={cn(
                   actionButtonBaseClass,
-                  'text-destructive hover:text-destructive',
+                  UNINSTALL_ICON_ACCENT_CLASS,
                 )}
                 onClick={() => setUninstallOpen(true)}
                 aria-label="Delete"
