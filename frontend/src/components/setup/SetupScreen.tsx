@@ -379,8 +379,8 @@ export function SetupScreen() {
                         'flex flex-col items-center gap-2.5 rounded-xl border p-5 text-center transition-all duration-150 ease-out',
                         value === true
                           ? checkForUpdates === true
-                            ? 'border-primary bg-primary/10 text-primary'
-                            : 'border-border text-foreground hover:border-primary/40 hover:bg-primary/5'
+                            ? 'border-chart-2 bg-chart-2/10 text-chart-2'
+                            : 'border-border text-foreground hover:border-chart-2/40 hover:bg-chart-2/5'
                           : checkForUpdates === false
                             ? 'border-destructive bg-destructive/10 text-destructive'
                             : 'border-border text-foreground hover:border-destructive/40 hover:bg-destructive/5',
@@ -393,7 +393,7 @@ export function SetupScreen() {
                           className={cn(
                             'text-xs',
                             value === true && checkForUpdates === true
-                              ? 'text-primary/70'
+                              ? 'text-chart-2/70'
                               : value === false && checkForUpdates === false
                                 ? 'text-destructive/70'
                                 : 'text-muted-foreground',
