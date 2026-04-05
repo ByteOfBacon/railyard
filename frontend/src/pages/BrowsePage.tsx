@@ -314,6 +314,7 @@ function BrowsePageContent({
                       type={itemType}
                       item={item}
                       viewMode={viewMode}
+                      descriptionMode="preview"
                       installedVersion={installedVersionByItemKey.get(
                         `${itemType}-${item.id}`,
                       )}
@@ -333,6 +334,7 @@ function BrowsePageContent({
                       type={itemType}
                       item={item}
                       viewMode={viewMode}
+                      descriptionMode="preview"
                       installedVersion={installedVersionByItemKey.get(
                         `${itemType}-${item.id}`,
                       )}
