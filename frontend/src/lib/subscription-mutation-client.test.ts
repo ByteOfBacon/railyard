@@ -6,12 +6,14 @@ const {
   mockUpdateSubscriptions,
   mockUpdateSubscriptionsToLatest,
   mockImportAsset,
+  mockCancelInstall,
   mockResolveActiveProfileID,
   mockToLatestUpdateRequestTargets,
 } = vi.hoisted(() => ({
   mockUpdateSubscriptions: vi.fn(),
   mockUpdateSubscriptionsToLatest: vi.fn(),
   mockImportAsset: vi.fn(),
+  mockCancelInstall: vi.fn(),
   mockResolveActiveProfileID: vi.fn(),
   mockToLatestUpdateRequestTargets: vi.fn(),
 }));
@@ -22,6 +24,10 @@ vi.mock('../../wailsjs/go/profiles/UserProfiles', () => ({
   ImportAsset: mockImportAsset,
 }));
 
+vi.mock('../../wailsjs/go/downloader/Downloader', () => ({
+  CancelInstall: mockCancelInstall,
+}));
+
 vi.mock('@/lib/subscription-updates', () => ({
   resolveActiveProfileID: mockResolveActiveProfileID,
   toLatestUpdateRequestTargets: mockToLatestUpdateRequestTargets,
@@ -29,6 +35,7 @@ vi.mock('@/lib/subscription-updates', () => ({
 
 import {
   applyLatestSubscriptionUpdatesForActiveProfile,
+  cancelInstallForAsset,
   importAssetForActiveProfile,
   isSubscriptionMutationLockedError,
   mutateSubscriptionsForActiveProfile,
@@ -59,6 +66,7 @@ describe('subscription-mutation-client', () => {
           }),
         },
         action: 'subscribe',
+        applyMode: 'persist_and_sync',
       }),
     ).rejects.toBeInstanceOf(SubscriptionMutationLockedError);
 
@@ -80,16 +88,42 @@ describe('subscription-mutation-client', () => {
         }),
       },
       action: 'subscribe',
+      applyMode: 'persist_and_sync',
       replaceOnConflict: true,
     });
+    await mutateSubscriptionsForActiveProfile({
+      assets: {
+        'mod-1': new types.SubscriptionUpdateItem({
+          type: 'mod',
+          version: '',
+        }),
+      },
+      action: 'unsubscribe',
+      applyMode: 'persist_and_sync',
+    });
+    await mutateSubscriptionsForActiveProfile({
+      assets: {
+        'map-2': new types.SubscriptionUpdateItem({
+          type: 'map',
+          version: 'v2.0.0',
+        }),
+      },
+      action: 'subscribe',
+      applyMode: 'persist_only',
+    });
 
-    expect(mockResolveActiveProfileID).toHaveBeenCalledTimes(1);
-    expect(mockUpdateSubscriptions).toHaveBeenCalledTimes(1);
-    const request = mockUpdateSubscriptions.mock.calls[0][0];
-    expect(request.profileId).toBe('profile-a');
-    expect(request.action).toBe('subscribe');
-    expect(request.applyMode).toBe('persist_and_sync');
-    expect(request.replaceOnConflict).toBe(true);
+    expect(mockResolveActiveProfileID).toHaveBeenCalledTimes(3);
+    expect(mockUpdateSubscriptions).toHaveBeenCalledTimes(3);
+    const [subscribeRequest, unsubscribeRequest, persistRequest] =
+      mockUpdateSubscriptions.mock.calls.map((call) => call[0]);
+    expect(subscribeRequest.profileId).toBe('profile-a');
+    expect(subscribeRequest.action).toBe('subscribe');
+    expect(subscribeRequest.applyMode).toBe('persist_and_sync');
+    expect(subscribeRequest.replaceOnConflict).toBe(true);
+    expect(unsubscribeRequest.action).toBe('unsubscribe');
+    expect(unsubscribeRequest.applyMode).toBe('persist_and_sync');
+    expect(persistRequest.action).toBe('subscribe');
+    expect(persistRequest.applyMode).toBe('persist_only');
   });
 
   it('delegates unlocked latest apply and import calls', async () => {
@@ -101,6 +135,10 @@ describe('subscription-mutation-client', () => {
       status: 'success',
       message: 'ok',
     });
+    mockCancelInstall.mockResolvedValue({
+      status: 'warn',
+      message: 'cancelled',
+    });
 
     await applyLatestSubscriptionUpdatesForActiveProfile({
       targets: [{ id: 'map-1', type: 'map' }],
@@ -109,6 +147,10 @@ describe('subscription-mutation-client', () => {
       assetType: 'map',
       zipPath: '/tmp/map.zip',
       replaceOnConflict: false,
+    });
+    await cancelInstallForAsset({
+      assetType: 'map',
+      assetId: 'map-1',
     });
 
     expect(mockUpdateSubscriptionsToLatest).toHaveBeenCalledTimes(1);
@@ -122,6 +164,9 @@ describe('subscription-mutation-client', () => {
     expect(importRequest.profileId).toBe('profile-a');
     expect(importRequest.assetType).toBe('map');
     expect(importRequest.zipPath).toBe('/tmp/map.zip');
+
+    expect(mockCancelInstall).toHaveBeenCalledTimes(1);
+    expect(mockCancelInstall).toHaveBeenCalledWith('map', 'map-1');
   });
 
   it('detects typed lock errors by class and code shape', () => {
