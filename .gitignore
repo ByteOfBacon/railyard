@@ -10,3 +10,4 @@ tmp/
 coverage
 coverage_func.txt
 $coverFile
+.vscode
