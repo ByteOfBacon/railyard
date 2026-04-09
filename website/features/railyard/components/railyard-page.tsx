@@ -382,7 +382,7 @@ export default function RailyardPage() {
     });
 
     // Fetch latest release assets from cache-first GitHub source
-    getGithubReleases('subway-builder-modded/railyard')
+    getGithubReleases('Subway-Builder-Modded/monorepo')
       .then((releases) => {
         const latestStableRelease = pickLatestStableRelease(releases);
         if (!latestStableRelease) return;
