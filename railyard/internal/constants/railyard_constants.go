@@ -7,7 +7,7 @@ import (
 //go:embed version.txt
 var RAILYARD_VERSION string
 
-const RAILYARD_REPO = "Subway-Builder-Modded/Railyard"
+const RAILYARD_REPO = "Subway-Builder-Modded/monorepo"
 
 // RailyardAssetMarker marks files/directories managed by Railyard installs.
 const RailyardAssetMarker = ".railyard_asset"

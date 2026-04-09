@@ -29,7 +29,7 @@ describe('loadRailyardAnalytics', () => {
 
     writeJson(dir, 'railyard_app_downloads.json', {
       schema_version: 1,
-      repo: 'Subway-Builder-Modded/railyard',
+      repo: 'Subway-Builder-Modded/monorepo',
       generated_at: '2026-03-31T21:28:35.717Z',
       latest_snapshot: '2026-03-31T21:00:00.000Z',
       versions: {
@@ -82,7 +82,7 @@ describe('loadRailyardAnalytics', () => {
     const data = loadRailyardAnalytics();
 
     expect(data.schemaVersion).toBe(1);
-    expect(data.repo).toBe('Subway-Builder-Modded/railyard');
+    expect(data.repo).toBe('Subway-Builder-Modded/monorepo');
     expect(data.summary.totalDownloads).toBe(140);
     expect(data.summary.totalVersions).toBe(2);
     expect(data.summary.totalAssets).toBe(3);
