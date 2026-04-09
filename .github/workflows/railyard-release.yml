@@ -1,4 +1,4 @@
-name: Release
+name: RailyardRelease
 
 on:
   push:
@@ -31,21 +31,20 @@ jobs:
           node-version: "20"
 
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - name: Cache pnpm store
         uses: actions/cache@v4
         with:
           path: ~/Library/pnpm/store
-          key: pnpm-${{ runner.os }}-${{ hashFiles('railyard/frontend/pnpm-lock.yaml') }}
+          key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: pnpm-${{ runner.os }}-
 
       - name: Install Wails
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
       - name: Install frontend dependencies
-        run: cd frontend && pnpm install
+        working-directory: .
+        run: pnpm install --frozen-lockfile
 
       - name: Update version in wails.json
         run: node scripts/update_wails_json.js
@@ -91,14 +90,12 @@ jobs:
           node-version: "24"
 
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - name: Cache pnpm store
         uses: actions/cache@v4
         with:
           path: ~/.local/share/pnpm/store
-          key: pnpm-${{ runner.os }}-${{ hashFiles('railyard/frontend/pnpm-lock.yaml') }}
+          key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: pnpm-${{ runner.os }}-
 
       - name: Install Linux dependencies
@@ -116,7 +113,8 @@ jobs:
           go mod vendor
 
       - name: Install frontend dependencies
-        run: cd frontend && pnpm install
+        working-directory: .
+        run: pnpm install --frozen-lockfile
 
       - name: Update version in wails.json
         run: node scripts/update_wails_json.js
@@ -156,14 +154,12 @@ jobs:
           node-version: "20"
 
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - name: Cache pnpm store
         uses: actions/cache@v4
         with:
           path: $HOME/AppData/Local/pnpm/store
-          key: pnpm-${{ runner.os }}-${{ hashFiles('railyard/frontend/pnpm-lock.yaml') }}
+          key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: pnpm-${{ runner.os }}-
 
       - name: Install NSIS
@@ -176,7 +172,8 @@ jobs:
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
       - name: Install frontend dependencies
-        run: cd frontend && pnpm install
+        working-directory: .
+        run: pnpm install --frozen-lockfile
 
       - name: Update version in wails.json
         run: node scripts/update_wails_json.js
