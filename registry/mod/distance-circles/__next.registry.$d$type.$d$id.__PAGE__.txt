@@ -1,0 +1,6 @@
+1:"$Sreact.fragment"
+3:I[670206,["/_next/static/chunks/0ia7y~crcam.5.js","/_next/static/chunks/0v~6.95~1~l3w.js","/_next/static/chunks/10dz2e6n6-ep_.js","/_next/static/chunks/0o5l9aop770az.js","/_next/static/chunks/0k6f03gjw2np-.js","/_next/static/chunks/0wzxb.0~yr8og.js","/_next/static/chunks/04n9rusp~v36b.js","/_next/static/chunks/0kv~1hpc.pbdz.js","/_next/static/chunks/0zdkf.75_ckgr.js","/_next/static/chunks/0~a7n.6zyv-_2.js","/_next/static/chunks/050fs77210k~e.js"],"OutletBoundary"]
+4:"$Sreact.suspense"
+0:{"rsc":["$","$1","c",{"children":["$L2",null,["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"2fz-QbHUo1JE2qS6JXHXI"}
+5:null
+2:E{"digest":"NEXT_REDIRECT;replace;/registry/mods/distance-circles;307;"}
