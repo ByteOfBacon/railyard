@@ -21,6 +21,11 @@ package-lock.json
 # production
 /build
 
+# cached data
+/public/railyard/
+/public/registry/
+/public/website/
+
 # misc
 .DS_Store
 *.pem
