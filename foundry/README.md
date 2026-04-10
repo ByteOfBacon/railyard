@@ -58,16 +58,21 @@ User Data Schemas (Must create these yourself from census data. In the future, t
 Raw Data Schemas:
 
     building_data.json // list of buildings
-        {
-            cityCode, dateGenerated // metadata
-            cols, rows, cells, // used to correct for map distortion by lon/lat.
-            minLon, minLat, maxLon, maxLat, // map bounding box
-            buildings[{id, location{lon,lat}, bbox{}, polygon{}, tags[], depth}]
-        }    
     pop_data.json // population data by individual building
         {
-            cityCode, dateGenerated // metadata
-            points[{id, location{lon,lat}, residents, jobs}]
+            type: "FeatureCollection",
+            bbox,
+            features: [{
+                type: "Feature"
+                geometry: {Point},
+                properties: {
+                    id,
+                    residents,
+                    jobs
+                }
+            }],
+            map_code,
+            generated_at,
         }
     optimized_pop_data // population points, optimize
 

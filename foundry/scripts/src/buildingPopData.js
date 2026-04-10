@@ -81,9 +81,10 @@ const squareFeetPerJob = {
   stadium: 150,
 };
 
-const processBuildingPopulation = (place, rawBuildings, rawBoundaries) => { 
+const processBuildingPopulation = (rawBuildings, rawBoundaries) => { 
 
   let calculatedBuildings = {};
+  let finalBuildings = {};
 
   // estimates building pops and jobs
   rawBuildings.forEach((building) => {
@@ -122,7 +123,7 @@ const processBuildingPopulation = (place, rawBuildings, rawBoundaries) => {
   //put buildings into a feature collection
   const buildingsAsFeatureCollection = turf.featureCollection(
     Object.values(calculatedBuildings).map((building) =>
-      turf.point(building.buildingCenter, { buildingID: building.id, approxPop: building.approxPop, approxJobs:building.approxJobs, realPops: 0, realJobs: 0})
+      turf.point(building.buildingCenter, { buildingID: building.id, approxPop: building.approxPop, approxJobs:building.approxJobs})
     )
   );
 
@@ -153,11 +154,18 @@ const processBuildingPopulation = (place, rawBuildings, rawBoundaries) => {
     buildingsWhichExistWithinFeature.features.forEach((feature) => {
       const building = calculatedBuildings[feature.properties.buildingID];
       finalFeature.percentOfTotalPopulation = building.approxPop / finalFeature.totalPopulation;
-      finalFeature.percentOfTotalJobs = building.approxJobs / finalFeature.Jobs;
-
+      finalFeature.percentOfTotalJobs = building.approxJobs / finalFeature.totalJobs;
+      
+      //adjusts population to be based off of input user data
+      building.approxPop = area.properties.residents * finalFeature.percentOfTotalPopulation;
+      building.approxJobs = area.properties.jobs * finalFeature.percentOfTotalJobs;
+      finalBuildings[feature.properties.buildingID]
     });
     finalAreaMetadata[feature.id] = finalFeature;
   });
+
+  //return buildings
+  return buildingsAsFeatureCollection;
 
 }
 
@@ -188,10 +196,10 @@ const processAllData = async (place) => {
   const rawBoundaries = await readJsonFile(`${import.meta.dirname}/user_data/${place.code}/regions_data_input.json`);
 
   console.log('Building Population Data for', place.code)
-  const processedBuildingPopulation = processBuildingPopulation(place, rawBuildings, rawBoundaries);
+  const processedBuildingPopulation = processBuildingPopulation(rawBuildings, rawBoundaries);
 
   console.log('Writing finished data for', place.code)
-  fs.writeFileSync(`${import.meta.dirname}/raw_data/${place.code}/pop_data.json`, JSON.stringify(processedConnections), { encoding: 'utf8' });
+  fs.writeFileSync(`${import.meta.dirname}/raw_data/${place.code}/pop_data.json`, JSON.stringify(processedBuildingPopulation), { encoding: 'utf8' });
 };
 
 if (!fs.existsSync(`${import.meta.dirname}/raw_data`)) fs.mkdirSync(`${import.meta.dirname}/raw_data`);
