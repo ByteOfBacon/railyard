@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { cn } from '@/lib/utils';
+import { cn } from '@subway-builder-modded/shared-ui';
 
 type GridPreset = 'default' | 'compact';
 
@@ -9,7 +9,10 @@ const presetToGridClassName: Record<GridPreset, string> = {
   compact: 'grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4',
 };
 
-type ResponsiveCardGridProps = Omit<React.ComponentProps<'div'>, 'children'> & {
+export type ResponsiveCardGridProps = Omit<
+  React.ComponentProps<'div'>,
+  'children'
+> & {
   preset?: GridPreset;
   children: React.ReactNode;
 };
@@ -23,11 +26,7 @@ export function ResponsiveCardGrid({
   return (
     <div
       data-slot="card-grid"
-      className={cn(
-        'grid items-stretch',
-        presetToGridClassName[preset],
-        className,
-      )}
+      className={cn('grid items-stretch', presetToGridClassName[preset], className)}
       {...props}
     >
       {children}

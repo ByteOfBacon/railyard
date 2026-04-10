@@ -18,6 +18,7 @@ on:
 
 jobs:
   backend_quality:
+    name: Backend Quality
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -37,6 +38,7 @@ jobs:
         run: bash ./scripts/backend-quality.sh
 
   frontend_quality:
+    name: Frontend Quality
     runs-on: ubuntu-latest
     defaults:
       run:

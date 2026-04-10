@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   check:
-    name: Check code quality
+    name: Check Code Quality
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -44,7 +44,7 @@ jobs:
         run: pnpm run check
 
   build:
-    name: Build site
+    name: Build Site
     runs-on: ubuntu-latest
     defaults:
       run:

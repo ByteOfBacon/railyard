@@ -9,19 +9,19 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import Link from 'next/link';
+import { Skeleton } from '@subway-builder-modded/shared-ui';
 
 import { EmptyState } from '@/features/railyard/components/empty-state';
 import { ErrorBanner } from '@/features/railyard/components/error-banner';
 import { SortableHeaderCell } from '@/features/railyard/components/sortable-header-cell';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import { cn } from '@subway-builder-modded/shared-ui';
 import type { VersionInfo } from '@/types/registry';
 
 type VersionSortField = 'version' | 'date' | 'downloads';
