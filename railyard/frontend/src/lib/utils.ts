@@ -1,8 +1,12 @@
-import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import {
+  type ClassValue as SharedClassValue,
+  cn as sharedCn,
+} from '@subway-builder-modded/shared-ui';
+
+export type ClassValue = SharedClassValue;
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+  return sharedCn(...inputs);
 }
 
 /** Join OS path segments, stripping redundant separators (handles both / and \). */

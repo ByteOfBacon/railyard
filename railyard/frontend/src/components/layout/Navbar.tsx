@@ -1,4 +1,15 @@
 import {
+  APP_SHELL_PADDING_CLASS,
+  APP_SHELL_WIDTH_CLASS,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@subway-builder-modded/shared-ui';
+import {
   CircleUser,
   Compass,
   Inbox,
@@ -13,19 +24,6 @@ import { type ComponentType, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Link, useLocation } from 'wouter';
 
-import {
-  APP_SHELL_PADDING_CLASS,
-  APP_SHELL_WIDTH_CLASS,
-} from '@/components/layout/layout-shell';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import {
   Tooltip,
   TooltipContent,

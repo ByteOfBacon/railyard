@@ -294,7 +294,7 @@ export const APP_NAVBAR_ITEMS: AppNavbarItem[] = [
       {
         id: 'github-railyard',
         title: 'Railyard',
-        href: 'https://github.com/Subway-Builder-Modded/railyard',
+        href: 'https://github.com/Subway-Builder-Modded/monorepo',
         icon: TrainTrack,
         schemeId: 'railyard',
       },

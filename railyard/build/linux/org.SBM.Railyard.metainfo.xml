@@ -11,6 +11,6 @@
     </p>
   </description>
   <launchable type="desktop-id">org.SBM.Railyard.desktop</launchable>
-  <url type="homepage">https://github.com/Subway-Builder-Modded/railyard</url>
-  <url type="bugtracker">https://github.com/Subway-Builder-Modded/railyard/issues</url>
+  <url type="homepage">https://github.com/Subway-Builder-Modded/monorepo</url>
+  <url type="bugtracker">https://github.com/Subway-Builder-Modded/monorepo/issues</url>
 </component>

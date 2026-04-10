@@ -1,0 +1,23 @@
+{
+  "name": "@subway-builder-modded/asset-listings-ui",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "dependencies": {
+    "@subway-builder-modded/shared-ui": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19"
+  },
+  "peerDependencies": {
+    "lucide-react": ">=0.4",
+    "react": ">=18"
+  }
+}

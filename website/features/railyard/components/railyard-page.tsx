@@ -53,7 +53,7 @@ import type { GithubRelease } from '@/lib/railyard/github-releases';
 import { getGithubReleases } from '@/lib/railyard/github-releases';
 import { fetchRegistryJsonWithFallback } from '@/lib/railyard/registry-source';
 import { buildTaggedItems, compareItems } from '@/lib/railyard/tagged-items';
-import { cn } from '@/lib/utils';
+import { cn } from '@subway-builder-modded/shared-ui';
 
 // ─── Data ──────────────────────────────────────────────────────────────────
 
@@ -382,7 +382,7 @@ export default function RailyardPage() {
     });
 
     // Fetch latest release assets from cache-first GitHub source
-    getGithubReleases('subway-builder-modded/railyard')
+    getGithubReleases('Subway-Builder-Modded/monorepo')
       .then((releases) => {
         const latestStableRelease = pickLatestStableRelease(releases);
         if (!latestStableRelease) return;
